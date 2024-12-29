@@ -14,7 +14,7 @@ export default class Tokenizer extends Visitor {
 module parser
 implicit none
 integer, private :: cursor
-character(len=:), allocatable, private :: entrada, expected ! entrada es la entrada a consumir
+character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
 contains
 
 subroutine parse(cad)
@@ -46,12 +46,23 @@ function aceptarPunto() result(aceptacion)
 
     if (cursor > len(entrada)) then
         aceptacion = .false.
-        expected = "<ANYTHING>"
+        esperado = "<ANYTHING>"
         return
     end if
     cursor = cursor + 1
     aceptacion = .true.
 end function aceptarPunto
+
+function aceptacionEOF() result(aceptacion)
+    logical :: aceptacion
+
+    if(.not. cursor > len(entrada)) then
+        aceptacion = .false.
+        esperado = "<EOF>"
+        return
+    end if
+    aceptacion = .true.
+end function aceptacionEOF
 
 function acioacioentradal_characters(input_string) result(output_string)
     implicit none
@@ -96,13 +107,13 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     if (isCase == "i") then ! case insentive
         if (tolower(literales) /= tolower(entrada(cursor:cursor + offset))) then
             aceptacion = .false.
-            expected = literales
+            esperado = literales
             return
         end if
     else
         if (literales /= entrada(cursor:cursor + offset)) then
             aceptacion = .false.
-            expected = literales
+            esperado = literales
             return
         end if
     end if
@@ -278,7 +289,7 @@ END function ${node.id}
     }
 
     visitfinCadena(node) {
-        return '';
+        return 'aceptacionEOF()';
     }
 
     renderQuantifierOption(qty, condition, length){
