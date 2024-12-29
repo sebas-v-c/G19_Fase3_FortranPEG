@@ -17,6 +17,8 @@ subroutine parse(cad)
     cursor = 1
     if (${grammar[0].id}()) then
         print *, "Parseo, exitoso !!"
+    else
+        print *, "Parser fallo, revisa que paso !!"
     end if
 end subroutine parse
 
@@ -67,9 +69,10 @@ end function
 
 function aceptarLiterales(literales, isCase) result(aceptacion)
     character(len=*) :: literales
+    character(len=*) :: isCase
     logical :: aceptacion
     integer :: offset
-
+    
     offset = len(literales) - 1
 
     if (isCase == "i") then ! case insentive
@@ -90,16 +93,24 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     aceptacion = .true.
     return
 end function aceptarLiterales
-
-    ${grammar.map((reglas) => reglas.accept(this)).join('\n')}
+${grammar.map((reglas) => reglas.accept(this)).join('\n')}
+end module parser
         `;
     }
 
     visitProducciones(node) {
         return `
-        function ${node.id}(Cadena) result(aceptacion)
+function ${node.id}() result(aceptacion)
+    logical :: aceptacion
+    integer :: no_caso
+
+    aceptacion = .false.
         ${node.expr.accept(this)}
-        END function ${node.id}
+    if (cursor > len(entrada)) then 
+        aceptacion = .true.
+    end if
+    return
+END function ${node.id}
         `
     }
     visitOpciones(node) {
