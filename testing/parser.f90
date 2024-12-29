@@ -100,34 +100,11 @@ recursive function ever() result(aceptacion)
                 
                         case(0)
                             
-                if (.not. (
-        do no_caso = 0, 2 ! lista de concatenaciones
-            select case(no_caso)
-                
-                        case(0)
-                            
-                if (.not. (aceptarLiterales("si","null"))) then
-                    cycle
-                end if
-                
-                            exit
-                        
-
-                        case(1)
-                            
-                if (.not. (aceptarLiterales("no","null"))) then
-                    cycle
-                end if
-                
-                            exit
-                        
-            case default
-                return
-            end select
-        end do
-        )) then
-                    cycle
-                end if
+                do while (len(entrada) > cursor)
+                    if (.not. (grupo0())) then
+                        exit
+                    end if
+                end do
                 
                             exit
                         
@@ -144,5 +121,45 @@ recursive function ever() result(aceptacion)
     return
 END function ever
         
+
+
+recursive function grupo0() result(aceptacion)
+    logical :: aceptacion
+    integer :: no_caso
+    logical :: temporal  
+
+    aceptacion = .false.
+    
+        do no_caso = 0, 2 ! lista de concatenaciones
+            select case(no_caso)
+                
+                        case(0)
+                            
+                if (.not. (aceptarLiterales("ever","null"))) then
+                    cycle
+                end if
+                
+                            exit
+                        
+
+                        case(1)
+                            
+                if (.not. (aceptarLiterales("km","null"))) then
+                    cycle
+                end if
+                
+                            exit
+                        
+            case default
+                return
+            end select
+        end do
+        
+
+    aceptacion = .true.
+    return
+    END function
+    
+
 end module parser
         

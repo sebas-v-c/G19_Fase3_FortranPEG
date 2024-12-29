@@ -4,7 +4,9 @@ import * as n from './CST.js';
 export default class Tokenizer extends Visitor {
     constructor(){
         super();
-        this.primera = true;
+        this.primera = true; // verificar primer produccion
+        this.contador_grupos = -1
+        this.grupos = []   // codigo de los grupos
     }
 
     Generar_Codigo(grammar) {
@@ -98,6 +100,24 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     return
 end function aceptarLiterales
 ${grammar.map((reglas) => reglas.accept(this)).join('\n')}
+
+${this.grupos.map((funcion,index) => `
+recursive function grupo${index}() result(aceptacion)
+    logical :: aceptacion
+    integer :: no_caso
+    logical :: temporal  
+
+    aceptacion = .false.
+    `+
+    funcion
+    +`
+
+    aceptacion = .true.
+    return
+    END function
+    `
+).join('\n')}
+
 end module parser
         `;
     }
@@ -247,8 +267,11 @@ END function ${node.id}
 
     visitgrupo(node) {
         node.expr.qty = node.qty
-        
-        return node.expr.accept(this);
+
+        this.contador_grupos++;
+
+        this.grupos.push(node.expr.accept(this));
+        return `grupo${this.contador_grupos}()`;
     }
 
     visitfinCadena(node) {
