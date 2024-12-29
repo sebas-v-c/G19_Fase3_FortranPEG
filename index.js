@@ -39,7 +39,7 @@ const analizar = () => {
         } else {
            
             const tokenizer = new Tokenizer();
-            const fileContents = tokenizer.generateTokenizer(cst);
+            const fileContents = tokenizer.Generar_Codigo(cst);
             const blob = new Blob([fileContents], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const button = document.getElementById('ButtomDownload');

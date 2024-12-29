@@ -2,35 +2,22 @@ import Visitor from './Visitor.js';
 import * as n from './CST.js';
 
 export default class Tokenizer extends Visitor {
-    constructor() {
-        super();
-        this.calledRules = [];
-        this.pendingRules = [];
-        this.isFisrtRule = true;
-        this.nameProduction = '';
-    }
-    generateTokenizer(grammar) {
+
+    Generar_Codigo(grammar) {
         return `
 module parser
 implicit none
-
+integer, private :: cursor
+character(len=:), allocatable, private :: entrada, expected ! entrada es la entrada a consumir
 contains
 
-subroutine parse(input)
-    character(len=:), intent(inout), allocatable :: input
-    character(len=:), allocatable :: lexeme
-    integer :: cursor
+subroutine parse(cad)
+    character(len=:), allocatable, intent(in) :: cad
+    entrada = cad
     cursor = 1
-    do while (lexeme /= "EOF" )
-        if(lexeme == "ERROR") THEN 
-            cursor = cursor + 1
-            lexeme = nextSym(input, cursor)
-        else 
-            lexeme = nextSym(input, cursor)
-            
-        end if
-        print *, lexeme
-    end do
+    if (${grammar[0].id}()) then
+        print *, "Parseo, exitoso !!"
+    end if
 end subroutine parse
 
 function tolower(str) result(lower_str)
@@ -78,130 +65,107 @@ function replace_special_characters(input_string) result(output_string)
     output_string = temp_string
 end function
 
-function nextSym(input, cursor) result(lexeme)
-    character(len=*), intent(in) :: input
-    integer, intent(inout) :: cursor
-    character(len=:), allocatable :: lexeme
-    character(len=:), allocatable :: buffer 
-    logical :: concat_failed
-    integer :: initialCursor
+function aceptarLiterales(literales, isCase) result(aceptacion)
+    character(len=*) :: literales
+    logical :: aceptacion
+    integer :: offset
 
-    if (cursor > len(input)) then
-        allocate( character(len=3) :: lexeme )
-        lexeme = "EOF"
-        return
+    offset = len(literales) - 1
+
+    if (isCase == "i") then ! case insentive
+        if (tolower(literales) /= tolower(entrada(cursor:cursor + offset))) then
+            aceptacion = .false.
+            expected = literales
+            return
+        end if
+    else
+        if (literales /= entrada(cursor:cursor + offset)) then
+            aceptacion = .false.
+            expected = literales
+            return
+        end if
     end if
 
-    ${(() => {
-        let result = '';
-        do {
-            
-            result += grammar.map((produccion) => produccion.accept(this)).join('\n');
-        } while (this.pendingRules.length > 0);
+    cursor = cursor + len(literales);
+    aceptacion = .true.
+    return
+end function aceptarLiterales
 
-        return result;  
-    })()}
-
-    print *, "error lexico en col ", cursor, ', "'//input(cursor:cursor)//'"'
-    lexeme = "ERROR"
-end function nextSym
-end module parser 
+    ${grammar.map((reglas) => reglas.accept(this)).join('\n')}
         `;
     }
 
     visitProducciones(node) {
-        if (this.isFisrtRule) {
-            this.isFisrtRule = false;  
-            let index = this.pendingRules.indexOf(node.id);
-
-            if (index !== -1) {
-                this.pendingRules.splice(index, 1);
-            }
-
-            this.nameProduction = node.alias? node.alias : '"'+node.id+'"';
-            console.log("nameProduction: " + this.nameProduction);
-            return node.expr.accept(this);
-        }
-
-
-        if (this.calledRules.includes(node.id) && this.pendingRules.includes(node.id)) {
-
-            let index = this.pendingRules.indexOf(node.id);
-
-            if (index !== -1) {
-                this.pendingRules.splice(index, 1);
-            }
-
-            this.nameProduction = node.alias? node.alias : '"'+node.id+'"';
-            //console.log("nameProduction: " + this.nameProduction);
-            return node.expr.accept(this);
-             
-        }
-
-        //console.log("llamadas");
-        //console.log(this.calledRules);
-        //console.log("pendientes");
-        //console.log(this.pendingRules);
-        return '';
+        return `
+        function ${node.id}(Cadena) result(aceptacion)
+        ${node.expr.accept(this)}
+        END function ${node.id}
+        `
     }
     visitOpciones(node) {
-        return node.exprs.map((expr) => expr.accept(this)).join('\n');
+        return `
+        do no_caso = 0, ${node.exprs.length} ! lista de concatenaciones
+            select case(no_caso)
+                ${node.exprs
+                    .map(
+                        (expr, i) => `
+                        case(${i})
+                            ${expr.accept(this)}
+                            exit
+                        `
+                    )
+                    .join('\n')}
+            case default
+                return
+            end select
+        end do
+        `;
+        
+        // node.exprs.map((expr) => expr.accept(this)).join('\n');
     }
     
     visitUnion(node) {
-        const grupos = [];
-        let grupoActual = [];
-        let resultadoFinal = '';
-        let resultadotmp = '';
-        for (let i = 0; i < node.exprs.length; i++) {
-            const expr = node.exprs[i];
-            if (expr.expr instanceof n.String || expr.expr instanceof n.Corchetes || expr.expr instanceof n.Any) { // Si es instancia de String, Corchete o Any, se agrega al grupo
-                grupoActual.push(expr);
-            } else { // Si no, cerramos el grupo y comenzamos uno nuevo
-                if (grupoActual.length > 0) {
-                    grupos.push(grupoActual);
-                    grupoActual = [];
-                }
-                resultadotmp += expr.accept(this) + "\n" // igual recorrer 
-            }
-        }
-        if (grupoActual.length > 0) {
-            grupos.push(grupoActual);
-        }
-
-        for (let grupo of grupos) {
-            const resultadoGrupo = grupo.map((expr) => expr.accept(this)).join('\n');
-            resultadoFinal += `
-    concat_failed = .false.
-    buffer = ""
-    ${resultadoGrupo}
-    if (.not. concat_failed .and. len(buffer) > 0) then
-        allocate( character(len=len(buffer)) :: lexeme)
-        lexeme = buffer
-        lexeme = lexeme // " -" // ${this.nameProduction}
-        return
-    end if
-        `
-        }
-        return resultadoFinal + resultadotmp;
+        return `${node.exprs.map((expr) => expr.accept(this)).join('\n')}`
     }
 
     visitExpresion(node) {
-        if ( node.qty && //there is a quantifier
-            (node.expr instanceof n.String 
-            || node.expr instanceof n.Corchetes
-            || node.expr instanceof n.grupo)
-        ){
-            node.expr.qty = node.qty // inherit quantifier
+        switch (node.qty) {   // cerraduras y contadores +, *, ?
+            case '+':
+                return `
+                if (.not. (${node.expr.accept(this)})) then
+                    cycle
+                end if
+                do while (len(entrada) > cursor)
+                    if (.not. (${node.expr.accept(this)})) then
+                        exit
+                    end if
+                end do
+                `;
+            case '*':
+                return `
+                do while (len(entrada) > cursor)
+                    if (.not. (${node.expr.accept(this)})) then
+                        exit
+                    end if
+                end do
+                `;
+            case '?':
+                return `
+                ${node.expr.accept(this)}
+                cycle
+                `;
+            default:
+                return `
+                if (.not. (${node.expr.accept(this)})) then
+                    cycle
+                end if
+                `;
         }
-        return node.expr.accept(this);
     }
 
     visitString(node) {
-        const condition = node.isCase 
-        ? `tolower("${node.val}") == tolower(input(cursor:cursor + ${ node.val.length - 1} ))`
-        :  `"${node.val}" == input(cursor:cursor + ${node.val.length - 1} )`;
-        return this.renderQuantifierOption(node.qty, condition, node.val.length)
+        return `aceptarLiterales("${node.val}","${node.isCase}")`;
+        //return this.renderQuantifierOption(node.qty, condition, node.val.length)
     }
 
     visitAny(node) { 
