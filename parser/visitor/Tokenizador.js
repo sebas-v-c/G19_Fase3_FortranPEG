@@ -247,6 +247,7 @@ END function ${node.id}
 
     visitgrupo(node) {
         node.expr.qty = node.qty
+        
         return node.expr.accept(this);
     }
 

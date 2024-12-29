@@ -100,7 +100,32 @@ recursive function ever() result(aceptacion)
                 
                         case(0)
                             
-                if (.not. (josh())) then
+                if (.not. (
+        do no_caso = 0, 2 ! lista de concatenaciones
+            select case(no_caso)
+                
+                        case(0)
+                            
+                if (.not. (aceptarLiterales("si","null"))) then
+                    cycle
+                end if
+                
+                            exit
+                        
+
+                        case(1)
+                            
+                if (.not. (aceptarLiterales("no","null"))) then
+                    cycle
+                end if
+                
+                            exit
+                        
+            case default
+                return
+            end select
+        end do
+        )) then
                     cycle
                 end if
                 
@@ -118,64 +143,6 @@ recursive function ever() result(aceptacion)
         end if
     return
 END function ever
-        
-
-recursive function josh() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal
-
-    aceptacion = .false.
-        
-        do no_caso = 0, 1 ! lista de concatenaciones
-            select case(no_caso)
-                
-                        case(0)
-                            
-                if (.not. (albright())) then
-                    cycle
-                end if
-                
-                            exit
-                        
-            case default
-                return
-            end select
-        end do
-        
-    
-    aceptacion = .true.
-    return
-END function josh
-        
-
-recursive function albright() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal
-
-    aceptacion = .false.
-        
-        do no_caso = 0, 1 ! lista de concatenaciones
-            select case(no_caso)
-                
-                        case(0)
-                            
-                if (.not. (aceptarLiterales("queso","null"))) then
-                    cycle
-                end if
-                
-                            exit
-                        
-            case default
-                return
-            end select
-        end do
-        
-    
-    aceptacion = .true.
-    return
-END function albright
         
 end module parser
         
