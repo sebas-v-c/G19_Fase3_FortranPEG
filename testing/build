@@ -1,0 +1,3 @@
+gfortran -c parser_pepino.f90
+gfortran -c test_pepino.f90
+gfortran parser_pepino.o test_pepino.o -o test_pepino

@@ -2,6 +2,10 @@ import Visitor from './Visitor.js';
 import * as n from './CST.js';
 
 export default class Tokenizer extends Visitor {
+    constructor(){
+        super();
+        this.primera = true;
+    }
 
     Generar_Codigo(grammar) {
         return `
@@ -99,20 +103,30 @@ end module parser
     }
 
     visitProducciones(node) {
-        return `
+        
+
+        let str = `
 function ${node.id}() result(aceptacion)
     logical :: aceptacion
     integer :: no_caso
+    logical :: temporal
 
     aceptacion = .false.
         ${node.expr.accept(this)}
-    if (cursor > len(entrada)) then 
-        aceptacion = .true.
-    end if
+    
+    ${
+        this.primera ? `
+        if (cursor > len(entrada)) then
+            aceptacion = .true.
+        end if` : ""
+        }
     return
 END function ${node.id}
         `
+    this.primera = false;
+    return str;
     }
+
     visitOpciones(node) {
         return `
         do no_caso = 0, ${node.exprs.length} ! lista de concatenaciones
@@ -162,8 +176,7 @@ END function ${node.id}
                 `;
             case '?':
                 return `
-                ${node.expr.accept(this)}
-                cycle
+                temporal = ${node.expr.accept(this)}
                 `;
             default:
                 return `
@@ -229,11 +242,7 @@ END function ${node.id}
     }
 
     visitidRel(node) {
-        if (!this.calledRules.includes(node.val)) {
-            this.calledRules.push(node.val);
-            this.pendingRules.push(node.val);
-        }
-        return '';
+        return `${node.val}()`;
     }
 
     visitgrupo(node) {

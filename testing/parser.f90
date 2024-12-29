@@ -3,17 +3,35 @@ module parser
 implicit none
 integer, private :: cursor
 character(len=:), allocatable, private :: entrada, expected ! entrada es la entrada a consumir
+
+	! initial code from FortranPEG grammar
+    	type :: node	
+		integer :: value
+		type(node), pointer :: next => null()
+	end type node
+
+	type(node), pointer :: head => null()
+
+    	! global var for input
+	character(len=:), allocatable :: input
+
+
+
 contains
+
+! codigo del inge
+
+
+
 
 subroutine parse(cad)
     character(len=:), allocatable, intent(in) :: cad
+    type(node), pointer :: res
     entrada = cad
     cursor = 1
-    if (uol()) then
-        print *, "Parseo, exitoso !!"
-    else
-        print *, "Parser fallo, revisa que paso !!"
-    end if
+
+    res => hola()
+
 end subroutine parse
 
 function tolower(str) result(lower_str)
@@ -88,9 +106,10 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     return
 end function aceptarLiterales
 
-function uol() result(aceptacion)
+function hola() result(aceptacion)
     logical :: aceptacion
     integer :: no_caso
+    logical :: temporal
 
     aceptacion = .false.
         
@@ -99,7 +118,7 @@ function uol() result(aceptacion)
                 
                         case(0)
                             
-                if (.not. (aceptarLiterales("ever","null"))) then
+                if (.not. (ever())) then
                     cycle
                 end if
                 
@@ -110,11 +129,42 @@ function uol() result(aceptacion)
             end select
         end do
         
-    if (cursor > len(entrada)) then 
-        aceptacion = .true.
-    end if
+    
+    
+        if (cursor > len(entrada)) then
+            aceptacion = .true.
+        end if
     return
-END function uol
+END function hola
+        
+
+function ever() result(aceptacion)
+    logical :: aceptacion
+    integer :: no_caso
+    logical :: temporal
+
+    aceptacion = .false.
+        
+        do no_caso = 0, 1 ! lista de concatenaciones
+            select case(no_caso)
+                
+                        case(0)
+                            
+                if (.not. (aceptarLiterales("si","null"))) then
+                    cycle
+                end if
+                
+                            exit
+                        
+            case default
+                return
+            end select
+        end do
+        
+    
+    
+    return
+END function ever
         
 end module parser
         
