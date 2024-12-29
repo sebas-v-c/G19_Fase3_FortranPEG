@@ -29,7 +29,19 @@ function tolower(str) result(lower_str)
         end do
 end function tolower
 
-function replace_special_characters(input_string) result(output_string)
+function aceptarPunto() result(aceptacion)
+    logical :: aceptacion
+
+    if (cursor > len(entrada)) then
+        aceptacion = .false.
+        expected = "<ANYTHING>"
+        return
+    end if
+    cursor = cursor + 1
+    aceptacion = .true.
+end function aceptarPunto
+
+function acioacioentradal_characters(input_string) result(output_string)
     implicit none
     character(len=:), allocatable, intent(in) :: input_string
     character(len=:), allocatable :: temp_string
@@ -59,7 +71,7 @@ function replace_special_characters(input_string) result(output_string)
     end do
     allocate(character(len=len(temp_string)) :: output_string)
     output_string = temp_string
-end function
+end function acioacioentradal_characters
 
 function aceptarLiterales(literales, isCase) result(aceptacion)
     character(len=*) :: literales
@@ -83,7 +95,7 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
         end if
     end if
 
-    cursor = cursor + len(literales);
+    cursor = cursor + len(literales)
     aceptacion = .true.
     return
 end function aceptarLiterales
@@ -100,8 +112,13 @@ recursive function ever() result(aceptacion)
                 
                         case(0)
                             
-                do while (len(entrada) > cursor)
-                    if (.not. (grupo0())) then
+                if (.not. (aceptarLiterales("km","null"))) then
+                    cycle
+                end if
+                
+
+                do while (len(entrada) >= cursor)
+                    if (.not. (aceptarPunto())) then
                         exit
                     end if
                 end do
@@ -123,43 +140,6 @@ END function ever
         
 
 
-recursive function grupo0() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal  
-
-    aceptacion = .false.
-    
-        do no_caso = 0, 2 ! lista de concatenaciones
-            select case(no_caso)
-                
-                        case(0)
-                            
-                if (.not. (aceptarLiterales("ever","null"))) then
-                    cycle
-                end if
-                
-                            exit
-                        
-
-                        case(1)
-                            
-                if (.not. (aceptarLiterales("km","null"))) then
-                    cycle
-                end if
-                
-                            exit
-                        
-            case default
-                return
-            end select
-        end do
-        
-
-    aceptacion = .true.
-    return
-    END function
-    
 
 end module parser
         

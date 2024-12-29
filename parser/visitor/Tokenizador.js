@@ -41,7 +41,19 @@ function tolower(str) result(lower_str)
         end do
 end function tolower
 
-function replace_special_characters(input_string) result(output_string)
+function aceptarPunto() result(aceptacion)
+    logical :: aceptacion
+
+    if (cursor > len(entrada)) then
+        aceptacion = .false.
+        expected = "<ANYTHING>"
+        return
+    end if
+    cursor = cursor + 1
+    aceptacion = .true.
+end function aceptarPunto
+
+function acioacioentradal_characters(input_string) result(output_string)
     implicit none
     character(len=:), allocatable, intent(in) :: input_string
     character(len=:), allocatable :: temp_string
@@ -71,7 +83,7 @@ function replace_special_characters(input_string) result(output_string)
     end do
     allocate(character(len=len(temp_string)) :: output_string)
     output_string = temp_string
-end function
+end function acioacioentradal_characters
 
 function aceptarLiterales(literales, isCase) result(aceptacion)
     character(len=*) :: literales
@@ -95,7 +107,7 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
         end if
     end if
 
-    cursor = cursor + len(literales);
+    cursor = cursor + len(literales)
     aceptacion = .true.
     return
 end function aceptarLiterales
@@ -180,7 +192,7 @@ END function ${node.id}
                 if (.not. (${node.expr.accept(this)})) then
                     cycle
                 end if
-                do while (len(entrada) > cursor)
+                do while (len(entrada) >= cursor)
                     if (.not. (${node.expr.accept(this)})) then
                         exit
                     end if
@@ -188,7 +200,7 @@ END function ${node.id}
                 `;
             case '*':
                 return `
-                do while (len(entrada) > cursor)
+                do while (len(entrada) >= cursor)
                     if (.not. (${node.expr.accept(this)})) then
                         exit
                     end if
@@ -213,17 +225,7 @@ END function ${node.id}
     }
 
     visitAny(node) { 
-        return `
-    ! Cualquier carácter es aceptado como lexema
-    if (cursor <= len_trim(input)) then
-        buffer = buffer // input(cursor:cursor + ${length - 1})
-        buffer = replace_special_characters(buffer)
-        cursor = cursor + ${length}
-    else
-        concat_failed = .true.
-        buffer = ""
-    end if
-    `;
+        return `aceptarPunto()`;
     }
 
     visitCorchetes(node) {
@@ -241,6 +243,7 @@ END function ${node.id}
         iachar(input(cursor:cursor)) <= iachar("${node.end}")`;
 
         return "(" + condition + ")";
+
     }
 
     //Solo devuelve las condiciones a cumplirse
