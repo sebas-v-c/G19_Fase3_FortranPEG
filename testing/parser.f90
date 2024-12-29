@@ -3,35 +3,17 @@ module parser
 implicit none
 integer, private :: cursor
 character(len=:), allocatable, private :: entrada, expected ! entrada es la entrada a consumir
-
-	! initial code from FortranPEG grammar
-    	type :: node	
-		integer :: value
-		type(node), pointer :: next => null()
-	end type node
-
-	type(node), pointer :: head => null()
-
-    	! global var for input
-	character(len=:), allocatable :: input
-
-
-
 contains
-
-! codigo del inge
-
-
-
 
 subroutine parse(cad)
     character(len=:), allocatable, intent(in) :: cad
-    type(node), pointer :: res
     entrada = cad
     cursor = 1
-
-    res => hola()
-
+    if (ever()) then
+        print *, "Parseo, exitoso !!"
+    else
+        print *, "Parser fallo, revisa que paso !!"
+    end if
 end subroutine parse
 
 function tolower(str) result(lower_str)
@@ -106,7 +88,7 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     return
 end function aceptarLiterales
 
-function hola() result(aceptacion)
+recursive function ever() result(aceptacion)
     logical :: aceptacion
     integer :: no_caso
     logical :: temporal
@@ -118,7 +100,7 @@ function hola() result(aceptacion)
                 
                         case(0)
                             
-                if (.not. (ever())) then
+                if (.not. (josh())) then
                     cycle
                 end if
                 
@@ -135,10 +117,10 @@ function hola() result(aceptacion)
             aceptacion = .true.
         end if
     return
-END function hola
+END function ever
         
 
-function ever() result(aceptacion)
+recursive function josh() result(aceptacion)
     logical :: aceptacion
     integer :: no_caso
     logical :: temporal
@@ -150,7 +132,7 @@ function ever() result(aceptacion)
                 
                         case(0)
                             
-                if (.not. (aceptarLiterales("si","null"))) then
+                if (.not. (albright())) then
                     cycle
                 end if
                 
@@ -162,9 +144,38 @@ function ever() result(aceptacion)
         end do
         
     
-    
+    aceptacion = .true.
     return
-END function ever
+END function josh
+        
+
+recursive function albright() result(aceptacion)
+    logical :: aceptacion
+    integer :: no_caso
+    logical :: temporal
+
+    aceptacion = .false.
+        
+        do no_caso = 0, 1 ! lista de concatenaciones
+            select case(no_caso)
+                
+                        case(0)
+                            
+                if (.not. (aceptarLiterales("queso","null"))) then
+                    cycle
+                end if
+                
+                            exit
+                        
+            case default
+                return
+            end select
+        end do
+        
+    
+    aceptacion = .true.
+    return
+END function albright
         
 end module parser
         

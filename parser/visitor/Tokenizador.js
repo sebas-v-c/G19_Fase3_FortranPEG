@@ -106,7 +106,7 @@ end module parser
         
 
         let str = `
-function ${node.id}() result(aceptacion)
+recursive function ${node.id}() result(aceptacion)
     logical :: aceptacion
     integer :: no_caso
     logical :: temporal
@@ -118,7 +118,7 @@ function ${node.id}() result(aceptacion)
         this.primera ? `
         if (cursor > len(entrada)) then
             aceptacion = .true.
-        end if` : ""
+        end if` : "aceptacion = .true."
         }
     return
 END function ${node.id}
