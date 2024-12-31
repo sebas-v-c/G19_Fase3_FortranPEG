@@ -122,6 +122,19 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     aceptacion = .true.
     return
 end function aceptarLiterales
+
+function aceptarRango(inicio, final) result(accept)
+    character(len=1) :: inicio, final
+    logical :: accept
+
+    if(.not. (input(cursor:cursor) >= inicio .and. input(cursor:cursor) <= final)) then
+        accept = .false.
+        return
+    end if
+    lexeme = consume(1)
+    accept = .true.
+end function aceptarRango
+
 ${grammar.map((reglas) => reglas.accept(this)).join('\n')}
 
 ${this.grupos.map((funcion,index) => `
@@ -247,13 +260,7 @@ END function ${node.id}
 
     //Solo devuelve las condiciones a cumplirse
     visitrango(node) {
-        const condition = node.isCase 
-        ? `iachar(tolower(input(cursor:cursor))) >= iachar("${node.start}") .and. &
-        iachar(tolower(input(cursor:cursor))) <= iachar("${node.end}")`
-        : `iachar(input(cursor:cursor)) >= iachar("${node.start}") .and. &
-        iachar(input(cursor:cursor)) <= iachar("${node.end}")`;
-
-        return "(" + condition + ")";
+        return `aceptarRango(${node.start} ,${node.end})`;
 
     }
 
