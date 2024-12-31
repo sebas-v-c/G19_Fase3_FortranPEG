@@ -6,7 +6,7 @@
 }}
 
 gramatica
-  = _ prods:producciones+ _ {
+  ="{" codigo:.* "}" _ prods:producciones+ _ {
     let duplicados = ids.filter((item, index) => ids.indexOf(item) !== index);
     if (duplicados.length > 0) {
         errores.push(new ErrorReglas("Regla duplicada: " + duplicados[0]));
@@ -32,7 +32,7 @@ opciones
   }
 
 union
-  = expr:expresion rest:(_ @expresion !(_ literales? _ "=") )* {
+  = expr:expresion rest:(_ @expresion !(_ literales? _ "=") )* _ "{" codigo:.* "}"{
     return new n.Union([expr, ...rest]);
   }
 

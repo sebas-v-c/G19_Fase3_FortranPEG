@@ -6,7 +6,7 @@ export class Producciones extends Node {
     constructor(id, expr, alias) {
         super();
         this.id = id;
-		this.expr = expr;
+		this.expr = expr; // dentro tiene opciones en un objeto
 		this.alias = alias;
     }
 
@@ -19,7 +19,7 @@ export class Opciones extends Node {
 
     constructor(exprs, qty) {
         super();
-        this.exprs = exprs;
+        this.exprs = exprs; //lista uniones
 		this.qty = qty;
     }
 
@@ -32,7 +32,7 @@ export class Union extends Node {
 
     constructor(exprs) {
         super();
-        this.exprs = exprs;
+        this.exprs = exprs; // lista de expresiones
     }
 
     accept(visitor) {

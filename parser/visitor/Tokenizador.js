@@ -1,4 +1,5 @@
 import Visitor from './Visitor.js';
+import {funciones, CrearGrupos,generarVariablesLexemas} from '../utils.js'
 import * as n from './CST.js';
 
 export default class Tokenizer extends Visitor {
@@ -7,6 +8,7 @@ export default class Tokenizer extends Visitor {
         this.primera = true; // verificar primer produccion
         this.contador_grupos = -1
         this.grupos = []   // codigo de los grupos
+        
     }
 
     Generar_Codigo(grammar) {
@@ -17,7 +19,7 @@ integer, private :: cursor
 character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
 contains
 
-subroutine parse(cad)
+subroutine parse(cad) result(res)
     character(len=:), allocatable, intent(in) :: cad
     entrada = cad
     cursor = 1
@@ -28,154 +30,30 @@ subroutine parse(cad)
     end if
 end subroutine parse
 
-function tolower(str) result(lower_str)
-        character(len=*), intent(in) :: str
-        character(len=len(str)) :: lower_str
-        integer :: i
-
-        lower_str = str 
-        do i = 1, len(str)
-            if (iachar(str(i:i)) >= iachar('A') .and. iachar(str(i:i)) <= iachar('Z')) then
-                lower_str(i:i) = achar(iachar(str(i:i)) + 32)
-            end if
-        end do
-end function tolower
-
-function aceptarPunto() result(aceptacion)
-    logical :: aceptacion
-
-    if (cursor > len(entrada)) then
-        aceptacion = .false.
-        esperado = "<ANYTHING>"
-        return
-    end if
-    cursor = cursor + 1
-    aceptacion = .true.
-end function aceptarPunto
-
-function aceptacionEOF() result(aceptacion)
-    logical :: aceptacion
-
-    if(.not. cursor > len(entrada)) then
-        aceptacion = .false.
-        esperado = "<EOF>"
-        return
-    end if
-    aceptacion = .true.
-end function aceptacionEOF
-
-function acioacioentradal_characters(input_string) result(output_string)
-    implicit none
-    character(len=:), allocatable, intent(in) :: input_string
-    character(len=:), allocatable :: temp_string
-    character(len=:), allocatable :: output_string
-    integer :: i, length
-
-    temp_string = ""
-    length = len(input_string)
-
-    do i = 1, length
-        select case (ichar(input_string(i:i)))
-        case (10) ! Nueva línea
-            temp_string = temp_string // '\\n'
-        case (9)  ! Tabulación
-            temp_string = temp_string // '\\t'
-        case (13) ! Retorno de carro
-            temp_string = temp_string // '\\r'
-        case (32) ! Espacio
-            if (input_string(i:i) == " ") then
-                temp_string = temp_string // "_"
-            else
-                temp_string = temp_string // input_string(i:i)
-            end if
-        case default
-            temp_string = temp_string // input_string(i:i)
-        end select
-    end do
-    allocate(character(len=len(temp_string)) :: output_string)
-    output_string = temp_string
-end function acioacioentradal_characters
-
-function aceptarLiterales(literales, isCase) result(aceptacion)
-    character(len=*) :: literales
-    character(len=*) :: isCase
-    logical :: aceptacion
-    integer :: offset
-    
-    offset = len(literales) - 1
-
-    if (isCase == "i") then ! case insentive
-        if (tolower(literales) /= tolower(entrada(cursor:cursor + offset))) then
-            aceptacion = .false.
-            esperado = literales
-            return
-        end if
-    else
-        if (literales /= entrada(cursor:cursor + offset)) then
-            aceptacion = .false.
-            esperado = literales
-            return
-        end if
-    end if
-
-    cursor = cursor + len(literales)
-    aceptacion = .true.
-    return
-end function aceptarLiterales
-
-function aceptarRango(inicio, final) result(accept)
-    character(len=1) :: inicio, final
-    logical :: accept
-
-    if(.not. (input(cursor:cursor) >= inicio .and. input(cursor:cursor) <= final)) then
-        accept = .false.
-        return
-    end if
-    lexeme = consume(1)
-    accept = .true.
-end function aceptarRango
-
-${grammar.map((reglas) => reglas.accept(this)).join('\n')}
-
-${this.grupos.map((funcion,index) => `
-recursive function grupo${index}() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal  
-
-    aceptacion = .false.
-    `+
-    funcion
-    +`
-
-    aceptacion = .true.
-    return
-    END function
-    `
-).join('\n')}
-
+${funciones}
+${grammar.map((produccion)=>produccion.accept(this)).join('\n')}
+${CrearGrupos(this.grupos)}
 end module parser
         `;
     }
 
-    visitProducciones(node) {
-        
-
+    visitProducciones(node) { // Producciones será la encargada de retornar SIEMPRE algo
+        //snode.expr // lista de opciones
         let str = `
-recursive function ${node.id}() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal
+recursive function ${node.id}() result(res)
 
-    aceptacion = .false.
+    ${generarVariablesLexemas(node.expr.exprs)}
+    integer :: no_caso
+    logical :: temporal  ! para el ?
+ 
+    res = .false.
         ${node.expr.accept(this)}
-    
     ${
         this.primera ? `
         if (cursor > len(entrada)) then
-            aceptacion = .true.
+            res = .true.
         end if` : "aceptacion = .true."
-        }
+        }  
     return
 END function ${node.id}
         `
@@ -255,7 +133,7 @@ END function ${node.id}
     visitCorchetes(node) {
         node.exprs.forEach(expr => { expr.isCase = node.isCase });
         let conditions = "(" + node.exprs.map((expr) => expr.accept(this)).join(')& \n    .or. (') + ")"
-        return this.renderQuantifierOption(node.qty, conditions, 1)
+        return ""
     }
 
     //Solo devuelve las condiciones a cumplirse
@@ -297,58 +175,6 @@ END function ${node.id}
 
     visitfinCadena(node) {
         return 'aceptacionEOF()';
-    }
-
-    renderQuantifierOption(qty, condition, length){
-        var resultOneMore = `
-        initialCursor = cursor
-        do while (cursor <= len_trim(input) .and. (${condition}))
-            cursor = cursor + ${length}
-        end do
-        if (cursor > initialCursor) then
-            buffer = buffer // input(initialCursor:cursor-1) 
-            buffer = replace_special_characters(buffer)
-        else
-            cursor = initialCursor
-            concat_failed = .true.
-            buffer = ""
-        end if`      ;
-
-        var resultZeroMore = `
-        initialCursor = cursor
-        do while (cursor <= len_trim(input) .and. (${condition}))
-            cursor = cursor + ${length}
-        end do
-        if (cursor > initialCursor) then
-            buffer = buffer // input(initialCursor:cursor-1) 
-            buffer = replace_special_characters(buffer)
-        end if`      ;
-
-        var resultZeroOrOne = `
-        if (cursor <= len_trim(input) .and. (${condition})) then 
-            buffer = buffer // input(cursor:cursor + ${length - 1})
-            buffer = replace_special_characters(buffer)
-            cursor = cursor + ${length}
-        end if` ;
-
-        var one = `
-        if (cursor <= len_trim(input) .and. (${condition})) then 
-            buffer = buffer // input(cursor:cursor + ${length - 1})
-            buffer = replace_special_characters(buffer)
-            cursor = cursor + ${length}
-        else
-            concat_failed = .true.
-            buffer = ""
-        end if` ;
-    
-        
-        switch (qty) {
-            case '+': return resultOneMore;
-            case '*': return resultZeroMore;
-            case '?': return resultZeroOrOne;
-            default: return one;
-        }   
-    
     }
 
 }
