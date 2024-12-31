@@ -19,6 +19,7 @@ program test
 		allocate (character(len=len) :: input)
         read (1) input
 		call parse(input)
+
 	else
 		print *, "error: file is not present"
 		stop

@@ -2,19 +2,21 @@
 module parser
 implicit none
 integer, private :: cursor
-character(len=:), allocatable, private :: entrada, expected ! entrada es la entrada a consumir
+character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
 contains
 
-subroutine parse(cad)
+subroutine parse(cad) 
     character(len=:), allocatable, intent(in) :: cad
     entrada = cad
     cursor = 1
-    if (ever()) then
+    if (hola()) then
         print *, "Parseo, exitoso !!"
     else
         print *, "Parser fallo, revisa que paso !!"
     end if
 end subroutine parse
+
+
 
 function tolower(str) result(lower_str)
         character(len=*), intent(in) :: str
@@ -34,12 +36,23 @@ function aceptarPunto() result(aceptacion)
 
     if (cursor > len(entrada)) then
         aceptacion = .false.
-        expected = "<ANYTHING>"
+        esperado = "<ANYTHING>"
         return
     end if
     cursor = cursor + 1
     aceptacion = .true.
 end function aceptarPunto
+
+function aceptacionEOF() result(aceptacion)
+    logical :: aceptacion
+
+    if(.not. cursor > len(entrada)) then
+        aceptacion = .false.
+        esperado = "<EOF>"
+        return
+    end if
+    aceptacion = .true.
+end function aceptacionEOF
 
 function acioacioentradal_characters(input_string) result(output_string)
     implicit none
@@ -84,13 +97,13 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     if (isCase == "i") then ! case insentive
         if (tolower(literales) /= tolower(entrada(cursor:cursor + offset))) then
             aceptacion = .false.
-            expected = literales
+            esperado = literales
             return
         end if
     else
         if (literales /= entrada(cursor:cursor + offset)) then
             aceptacion = .false.
-            expected = literales
+            esperado = literales
             return
         end if
     end if
@@ -100,7 +113,19 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     return
 end function aceptarLiterales
 
-recursive function ever() result(aceptacion)
+function aceptarRango(inicio, final) result(accept)
+    character(len=1) :: inicio, final
+    logical :: accept
+
+    if(.not. (entrada(cursor:cursor) >= inicio .and. entrada(cursor:cursor) <= final)) then
+        accept = .false.
+        return
+    end if
+    !lexeme = consume(1)
+    accept = .true.
+end function aceptarRango
+
+recursive function hola() result(aceptacion)
     logical :: aceptacion
     integer :: no_caso
     logical :: temporal
@@ -112,16 +137,9 @@ recursive function ever() result(aceptacion)
                 
                         case(0)
                             
-                if (.not. (aceptarLiterales("km","null"))) then
+                if (.not. (aceptarLiterales("bebe","null"))) then
                     cycle
                 end if
-                
-
-                do while (len(entrada) >= cursor)
-                    if (.not. (aceptarPunto())) then
-                        exit
-                    end if
-                end do
                 
                             exit
                         
@@ -136,10 +154,8 @@ recursive function ever() result(aceptacion)
             aceptacion = .true.
         end if
     return
-END function ever
+END function hola
         
-
-
 
 end module parser
         
