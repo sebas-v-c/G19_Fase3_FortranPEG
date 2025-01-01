@@ -1,5 +1,6 @@
 
 export default class Visitor {
+	visitGramatica(node){}
 	visitProducciones(node) {}
 	visitOpciones(node) {}
 	visitUnion(node) {}

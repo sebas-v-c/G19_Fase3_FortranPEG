@@ -22,3 +22,8 @@ fi
 # Ejecutar el ejecutable generado
 echo "Ejecutando el programa..."
 ./test entrada.txt
+
+
+# gfortran -o testear testear.f90
+
+#

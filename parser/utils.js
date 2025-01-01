@@ -1,7 +1,5 @@
 // Generacion de código
 
-// import { Union } from "./visitor/CST";
-
 let funciones =
 `
 function tolower(str) result(lower_str)
@@ -146,6 +144,9 @@ function generarVariablesLexemas(Lista_Opciones){
     }
     return variables; // generará variables polimórficas
 }
+
+
+// a = "hola" ever / jonas "que" "olga"
 
 
 export {funciones,CrearGrupos,generarVariablesLexemas}

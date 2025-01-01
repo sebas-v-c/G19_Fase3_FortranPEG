@@ -6,7 +6,7 @@
 }}
 
 gramatica
-  ="{" codigo:.* "}" _ prods:producciones+ _ {
+  =codigo:CodigoGlobal? _ prods:producciones+ _ {
     let duplicados = ids.filter((item, index) => ids.indexOf(item) !== index);
     if (duplicados.length > 0) {
         errores.push(new ErrorReglas("Regla duplicada: " + duplicados[0]));
@@ -17,8 +17,23 @@ gramatica
     if (noEncontrados.length > 0) {
         errores.push(new ErrorReglas("Regla no encontrada: " + noEncontrados[0]));
     }
-    return prods;
+
+
+    return new n.Gramatica(codigo, prods);
   }
+
+// Acciones semánticas
+CodigoGlobal
+  = "{" antes:$(. !"contains")* [ \t\n\r]* "contains" [ \t\n\r]* despues:$[^}]* "}" {
+    return [antes,despues]
+}
+
+Declaracion_res
+  = t:$(. !"::")+ [ \t\n\r]* "::" [ \t\n\r]* "res" 
+
+predicado
+  = "{" [ \t\n\r]* returnType:Declaracion_res code:$[^}]* "}"
+// Acciones semánticas
 
 producciones
   = _ id:identificador _ alias:$(literales)? _ "=" _ expr:opciones (_";")? {
@@ -32,8 +47,8 @@ opciones
   }
 
 union
-  = expr:expresion rest:(_ @expresion !(_ literales? _ "=") )* _ "{" codigo:.* "}"{
-    return new n.Union([expr, ...rest]);
+  = expr:expresion rest:(_ @expresion !(_ literales? _ "=") )* accion:(_ @predicado)? {
+    return new n.Union([expr, ...rest], accion);
   }
 
 expresion

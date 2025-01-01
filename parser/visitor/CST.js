@@ -1,6 +1,18 @@
 
 import Node from './Node.js';
 
+export class Gramatica {
+
+    constructor(CodigoGlobal,Reglas) {
+        this.Reglas = Reglas;  // Lista de producciones
+		this.CodigoGlobal = CodigoGlobal; // Arreglo dividido por contains
+    }
+
+    accept(visitor) {
+        return visitor.visitGramatica(this);
+    }
+}
+
 export class Producciones extends Node {
 
     constructor(id, expr, alias) {
@@ -14,7 +26,7 @@ export class Producciones extends Node {
         return visitor.visitProducciones(this);
     }
 }
-    
+
 export class Opciones extends Node {
 
     constructor(exprs, qty) {
@@ -30,9 +42,10 @@ export class Opciones extends Node {
     
 export class Union extends Node {
 
-    constructor(exprs) {
+    constructor(exprs,Accion) {
         super();
         this.exprs = exprs; // lista de expresiones
+        this.Accion = Accion;
     }
 
     accept(visitor) {

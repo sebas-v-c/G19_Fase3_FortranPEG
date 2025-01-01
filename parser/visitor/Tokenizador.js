@@ -2,6 +2,14 @@ import Visitor from './Visitor.js';
 import {funciones, CrearGrupos,generarVariablesLexemas} from '../utils.js'
 import * as n from './CST.js';
 
+/*
+    if (${grammar[0].id}()) then
+        print *, "Parseo, exitoso !!"
+    else
+        print *, "Parser fallo, revisa que paso !!"
+    end if
+ */
+
 export default class Tokenizer extends Visitor {
     constructor(){
         super();
@@ -12,41 +20,45 @@ export default class Tokenizer extends Visitor {
     }
 
     Generar_Codigo(grammar) {
+        return grammar.accept(this);
+    }
+
+    visitGramatica(node){
         return `
-module parser
-implicit none
-integer, private :: cursor
-character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
-contains
-
-subroutine parse(cad) result(res)
-    character(len=:), allocatable, intent(in) :: cad
-    entrada = cad
-    cursor = 1
-    if (${grammar[0].id}()) then
-        print *, "Parseo, exitoso !!"
-    else
-        print *, "Parser fallo, revisa que paso !!"
-    end if
-end subroutine parse
-
-${funciones}
-${grammar.map((produccion)=>produccion.accept(this)).join('\n')}
-${CrearGrupos(this.grupos)}
-end module parser
-        `;
+        module parser
+        implicit none
+        integer, private :: cursor
+        character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
+        ! variables globales
+        ${node.CodigoGlobal ? node.CodigoGlobal[0] : undefined} 
+        contains
+        ! Funciones globales
+        ${node.CodigoGlobal ? node.CodigoGlobal[1] : undefined} 
+        subroutine parse(cad) result(res)
+            character(len=:), allocatable, intent(in) :: cad
+            entrada = cad
+            cursor = 1
+        
+            res = ${node.Reglas[0].id}() ! esperamos el retorno
+        end subroutine parse
+        ! funciones útiles
+        ${funciones}
+        ${node.Reglas.map((produccion)=>produccion.accept(this)).join('\n')}
+        ! grupos
+        ${CrearGrupos(this.grupos)}
+        end module parser
+                `;
     }
 
     visitProducciones(node) { // Producciones será la encargada de retornar SIEMPRE algo
         //snode.expr // lista de opciones
         let str = `
 recursive function ${node.id}() result(res)
-
     ${generarVariablesLexemas(node.expr.exprs)}
     integer :: no_caso
     logical :: temporal  ! para el ?
  
-    res = .false.
+    
         ${node.expr.accept(this)}
     ${
         this.primera ? `
@@ -60,6 +72,8 @@ END function ${node.id}
     this.primera = false;
     return str;
     }
+
+
 
     visitOpciones(node) {
         return `
