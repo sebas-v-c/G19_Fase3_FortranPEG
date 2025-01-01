@@ -1,7 +1,7 @@
 {{
     import { ids, usos} from '../index.js'
     import { ErrorReglas } from './error.js';
-    import { errores } from '../index.js'ewi
+    import { errores } from '../index.js'
     import * as n from '../parser/visitor/CST.js';
 }}
 
@@ -35,7 +35,7 @@ Declaracion_res
 
 predicado
   = "{" [ \t\n\r]* Declarion_res:Declaracion_res codigo:$[^}]* "}"{
-    return new n.Predicate(Declarion_res, codigo, {})
+    return new n.Predicado(Declarion_res, codigo, {})
 }
 // ------- Acciones semánticas -------
 

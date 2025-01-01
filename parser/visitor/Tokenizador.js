@@ -23,6 +23,8 @@ export default class Tokenizer extends Visitor {
         this.Contador_Acciones = -1
         this.Acciones = []   // codigo de los grupos
 
+        this.Tipo_Retorno_parse = ""
+
     }
 
     Generar_Codigo(grammar) {
@@ -31,38 +33,40 @@ export default class Tokenizer extends Visitor {
 
     visitGramatica(node){
         return `
-        module parser
-        implicit none
-        integer, private :: cursor
-        character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
-        ! variables globales
-        ${node.CodigoGlobal ? node.CodigoGlobal[0] : ""} 
-        contains
-        ! Funciones globales
-        ${node.CodigoGlobal ? node.CodigoGlobal[1] : ""} 
-        subroutine parse(cad) result(res)
-            character(len=:), allocatable, intent(in) :: cad
-            entrada = cad
-            cursor = 1
+module parser
+implicit none
+integer, private :: cursor
+character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
+! variables globales
+${node.CodigoGlobal ? node.CodigoGlobal[0] : ""} 
+contains
+! Funciones globales
+${node.CodigoGlobal ? node.CodigoGlobal[1] : ""} 
+function parse(cad) result(res)
+    character(len=:), allocatable, intent(in) :: cad
+    ${node.Reglas[0].expr.exprs[0].Predicado? node.Reglas[0].expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable"} res
+    entrada = cad
+    cursor = 1
         
-            res = ${node.Reglas[0].id}() ! esperamos el retorno
-        end subroutine parse
-        ! funciones útiles
-        ${funciones}
-        ${node.Reglas.map((produccion)=>produccion.accept(this)).join('\n')}
-        ! Acciones
-        ${CrearAcciones(this.Acciones)}
-        ! grupos
-        ${CrearGrupos(this.grupos)}
-        end module parser
+    res = ${node.Reglas[0].id}() ! esperamos el retorno
+end function parse
+! funciones útiles
+${funciones}
+${node.Reglas.map((produccion)=>produccion.accept(this)).join('\n')}
+! Acciones
+${CrearAcciones(this.Acciones)}
+! grupos
+${CrearGrupos(this.grupos)}
+end module parser
                 `;
     }
 
     visitProducciones(node) { // Producciones será la encargada de retornar SIEMPRE algo
-        //snode.expr // lista de opciones
+        //node.expr // lista de opciones
         let str = `
 recursive function ${node.id}() result(res)
     ${generarVariablesLexemas(node.expr.exprs)} 
+    ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable"} res
     integer :: no_caso
     logical :: temporal  ! para el ?
  
@@ -83,6 +87,7 @@ END function ${node.id}
 
 
     visitOpciones(node) {
+
         return `
         do no_caso = 0, ${node.exprs.length} ! lista de concatenaciones
             select case(no_caso)
@@ -90,7 +95,7 @@ END function ${node.id}
                     .map(
                         (expr, i) => `
                         case(${i})
-                            ${expr.accept(this)}
+                            ${expr.accept(this,i)}
                             exit
                         `
                     )
@@ -104,8 +109,8 @@ END function ${node.id}
         // node.exprs.map((expr) => expr.accept(this)).join('\n');
     }
     
-    visitUnion(node) {
-        return `${node.exprs.map((expr) => expr.accept(this)).join('\n')} \n${node.Predicado? node.Predicado.accept(this): Elegir_Retorno_res()}`  // expr.accept(this) sería la escritura de las expresiones
+    visitUnion(node,caso) {
+        return `${node.exprs.map((expr) => expr.accept(this)).join('\n')} \n${node.Predicado? node.Predicado.accept(this): Elegir_Retorno_res(node.exprs.length,caso)}`  // expr.accept(this) sería la escritura de las expresiones
     }
 
     visitPredicado(node){ // Este asigna el retorno por medio de accion semántica
@@ -115,7 +120,7 @@ END function ${node.id}
     }
 
     visitExpresion(node) {
-        switch (node.qty) {   // cerraduras y contadores +, *, ?
+        switch (node.qty) {   // cerraduras y contadores +, *, ?, conteo
             case '+':
                 return `
                 if (.not. (${node.expr.accept(this)})) then

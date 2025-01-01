@@ -143,14 +143,19 @@ function EleccionTipo(expresion) {
         return "No es un string";
     }
 }
-let variables = "";
 
+let Tipos_Variables = []
 function generarVariablesLexemas(Lista_Opciones){
-    variables = "";
+    let variables = "";
+    Tipos_Variables = []
     Lista_Opciones.forEach((Opcion,i) => {
+        let Tipos_Expresiones = [];
         Opcion.exprs.forEach((expresion,j) => {
+            Tipos_Expresiones.push(EleccionTipo(expresion));
+            
             variables +=`${EleccionTipo(expresion)} :: s${i}${j}\n`
        }); 
+       Tipos_Variables.push(Tipos_Expresiones);
     });
     return variables; // generará variables polimórficas
 }
@@ -162,15 +167,27 @@ function CrearAcciones(Acciones){
     for (let i = 0; i < Acciones.length; i++) { 
         codigo +=`
         function f${i}() result(res)
-        ${Accion[i]}
+        ${Acciones[i]}
         end function f${i}
         `
     }
     return codigo
 }
 
-function Elegir_Retorno_res(){
+function Casteo(Tipo_de_la_Variable){ // Todo a retornará a string
+    
+}
 
+function Elegir_Retorno_res(numero_Concatenaciones, numero_Caso){
+    let retorno = "res = "
+
+    for (let i = 0; i < numero_Concatenaciones; i++) {
+        retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`
+    }
+    
+    retorno = retorno.slice(0, -2);
+
+    return retorno;
 }
 
 export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones}

@@ -3,7 +3,7 @@ export default class Visitor {
 	visitGramatica(node){}
 	visitProducciones(node) {}
 	visitOpciones(node) {}
-	visitUnion(node) {}
+	visitUnion(node,caso) {}
 	visitPredicado(node){}
 	visitExpresion(node) {}
 	visitString(node) {}

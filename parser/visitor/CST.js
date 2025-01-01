@@ -48,8 +48,8 @@ export class Union extends Node {
         this.Predicado = Predicado;
     }
 
-    accept(visitor) {
-        return visitor.visitUnion(this);
+    accept(visitor, caso=undefined) {
+        return visitor.visitUnion(this,caso);
     }
 }
 
