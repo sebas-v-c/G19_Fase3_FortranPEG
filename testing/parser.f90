@@ -1,145 +1,152 @@
-
+!auto-generated
 module parser
-implicit none
-integer, private :: cursor
-character(len=:), allocatable, private :: entrada, expected ! entrada es la entrada a consumir
-contains
+    implicit none
+    character(len=:), allocatable, private :: input
+    integer, private :: savePoint, lexemeStart, cursor
 
-subroutine parse(cad)
-    character(len=:), allocatable, intent(in) :: cad
-    entrada = cad
-    cursor = 1
-    if (ever()) then
-        print *, "Parseo, exitoso !!"
-    else
-        print *, "Parser fallo, revisa que paso !!"
-    end if
-end subroutine parse
+    interface toStr
+        module procedure intToStr
+        module procedure strToStr
+    end interface
+    
+    
 
-function tolower(str) result(lower_str)
-        character(len=*), intent(in) :: str
-        character(len=len(str)) :: lower_str
+    contains
+    
+    
+
+    function parse(str) result(res)
+        character(len=:), allocatable :: str
+        character(len=:), allocatable :: res
+
+        input = str
+        cursor = 1
+
+        res = peg_hola()
+    end function parse
+
+    
+    function peg_hola() result (res)   ! hola = "hola" "hola" "jer" / jorge [0-9]
+        character(len=:), allocatable :: res
+        character(len=:), allocatable :: expr_0_0
+            character(len=:), allocatable :: expr_0_1
+                character(len=:), allocatable :: expr_0_2   
         integer :: i
 
-        lower_str = str 
-        do i = 1, len(str)
-            if (iachar(str(i:i)) >= iachar('A') .and. iachar(str(i:i)) <= iachar('Z')) then
-                lower_str(i:i) = achar(iachar(str(i:i)) + 32)
-            end if
-        end do
-end function tolower
-
-function aceptarPunto() result(aceptacion)
-    logical :: aceptacion
-
-    if (cursor > len(entrada)) then
-        aceptacion = .false.
-        expected = "<ANYTHING>"
-        return
-    end if
-    cursor = cursor + 1
-    aceptacion = .true.
-end function aceptarPunto
-
-function acioacioentradal_characters(input_string) result(output_string)
-    implicit none
-    character(len=:), allocatable, intent(in) :: input_string
-    character(len=:), allocatable :: temp_string
-    character(len=:), allocatable :: output_string
-    integer :: i, length
-
-    temp_string = ""
-    length = len(input_string)
-
-    do i = 1, length
-        select case (ichar(input_string(i:i)))
-        case (10) ! Nueva línea
-            temp_string = temp_string // '\n'
-        case (9)  ! Tabulación
-            temp_string = temp_string // '\t'
-        case (13) ! Retorno de carro
-            temp_string = temp_string // '\r'
-        case (32) ! Espacio
-            if (input_string(i:i) == " ") then
-                temp_string = temp_string // "_"
-            else
-                temp_string = temp_string // input_string(i:i)
-            end if
-        case default
-            temp_string = temp_string // input_string(i:i)
-        end select
-    end do
-    allocate(character(len=len(temp_string)) :: output_string)
-    output_string = temp_string
-end function acioacioentradal_characters
-
-function aceptarLiterales(literales, isCase) result(aceptacion)
-    character(len=*) :: literales
-    character(len=*) :: isCase
-    logical :: aceptacion
-    integer :: offset
-    
-    offset = len(literales) - 1
-
-    if (isCase == "i") then ! case insentive
-        if (tolower(literales) /= tolower(entrada(cursor:cursor + offset))) then
-            aceptacion = .false.
-            expected = literales
-            return
-        end if
-    else
-        if (literales /= entrada(cursor:cursor + offset)) then
-            aceptacion = .false.
-            expected = literales
-            return
-        end if
-    end if
-
-    cursor = cursor + len(literales)
-    aceptacion = .true.
-    return
-end function aceptarLiterales
-
-recursive function ever() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal
-
-    aceptacion = .false.
+        savePoint = cursor
         
-        do no_caso = 0, 1 ! lista de concatenaciones
-            select case(no_caso)
+        do i = 0, 1
+            select case(i)
+            
+            case(0)
+                cursor = savePoint
                 
-                        case(0)
-                            
-                if (.not. (aceptarLiterales("km","null"))) then
-                    cycle
-                end if
                 
+                lexemeStart = cursor
+                if(.not. acceptString('hola')) cycle
+                expr_0_0 = consumeInput()
+        
+                if (.not. acceptEOF()) cycle
+                
+                res = toStr(expr_0_0)
 
-                do while (len(entrada) >= cursor)
-                    if (.not. (aceptarPunto())) then
-                        exit
-                    end if
-                end do
-                
-                            exit
-                        
+
+                exit
+            
             case default
-                return
+                call pegError()
             end select
         end do
-        
+
+    end function peg_hola
+
+
     
-    
-        if (cursor > len(entrada)) then
-            aceptacion = .true.
+
+    function acceptString(str) result(accept)
+        character(len=*) :: str
+        logical :: accept
+        integer :: offset
+
+        offset = len(str) - 1
+        if (str /= input(cursor:cursor + offset)) then
+            accept = .false.
+            return
         end if
-    return
-END function ever
-        
+        cursor = cursor + len(str)
+        accept = .true.
+    end function acceptString
 
+    function acceptRange(bottom, top) result(accept)
+        character(len=1) :: bottom, top
+        logical :: accept
 
+        if(.not. (input(cursor:cursor) >= bottom .and. input(cursor:cursor) <= top)) then
+            accept = .false.
+            return
+        end if
+        cursor = cursor + 1
+        accept = .true.
+    end function acceptRange
 
+    function acceptSet(set) result(accept)
+        character(len=1), dimension(:) :: set
+        logical :: accept
+
+        if(.not. (findloc(set, input(cursor:cursor), 1) > 0)) then
+            accept = .false.
+            return
+        end if
+        cursor = cursor + 1
+        accept = .true.
+    end function acceptSet
+
+    function acceptPeriod() result(accept)
+        logical :: accept
+
+        if (cursor > len(input)) then
+            accept = .false.
+            return
+        end if
+        cursor = cursor + 1
+        accept = .true.
+    end function acceptPeriod
+
+    function acceptEOF() result(accept)
+        logical :: accept
+
+        if(.not. cursor > len(input)) then
+            accept = .false.
+            return
+        end if
+        accept = .true.
+    end function acceptEOF
+
+    function consumeInput() result(substr)
+        character(len=:), allocatable :: substr
+
+        substr = input(lexemeStart:cursor - 1)
+    end function consumeInput
+
+    subroutine pegError()
+        print '(A,I1,A)', "Error at ", cursor, ": '"//input(cursor:cursor)//"'"
+
+        call exit(1)
+    end subroutine pegError
+
+    function intToStr(int) result(cast)
+        integer :: int
+        character(len=31) :: tmp
+        character(len=:), allocatable :: cast
+
+        write(tmp, '(I0)') int
+        cast = trim(adjustl(tmp))
+    end function intToStr
+
+    function strToStr(str) result(cast)
+        character(len=:), allocatable :: str
+        character(len=:), allocatable :: cast
+
+        cast = str
+    end function strToStr
 end module parser
-        
