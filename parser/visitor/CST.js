@@ -42,14 +42,27 @@ export class Opciones extends Node {
     
 export class Union extends Node {
 
-    constructor(exprs,Accion) {
+    constructor(exprs,Predicado) {
         super();
         this.exprs = exprs; // lista de expresiones
-        this.Accion = Accion;
+        this.Predicado = Predicado;
     }
 
     accept(visitor) {
         return visitor.visitUnion(this);
+    }
+}
+
+export class Predicado {
+
+    constructor(Declarion_res, codigo, parametros) {
+        this.Declarion_res = Declarion_res;
+		this.codigo = codigo;
+		this.parametros = parametros;
+    }
+
+    accept(visitor) {
+        return visitor.visitPredicado(this);
     }
 }
     

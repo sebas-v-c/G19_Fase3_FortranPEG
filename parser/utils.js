@@ -1,5 +1,8 @@
-// Generacion de código
+// Importaciones
 
+import { String } from "./visitor/CST.js";
+
+// Generacion de código
 let funciones =
 `
 function tolower(str) result(lower_str)
@@ -120,7 +123,6 @@ recursive function grupo${index}() result(aceptacion)
     `+
     funcion
     +`
-
     aceptacion = .true.
     return
 END function
@@ -128,25 +130,47 @@ END function
 ).join('\n')
 }
 
-// generacion de variables concatenadas ej: s0,s1,s2,s3 => concatenarlas como return
-function generarVariablesLexemas(Lista_Opciones){
-    let Numero_Concatenaciones_por_Opcion = []
-    Lista_Opciones.forEach((Opcion,index) => {
-        Numero_Concatenaciones_por_Opcion.push(Number(Opcion.exprs.length)); // Opcion.exprs es la lista de expresiones de la union
-        
-    });
+// Tipo Retorno
+function Generar_Variable_Res(){
 
-    Numero_Concatenaciones_por_Opcion.sort((a,b) => b-a);
-    let Numero_Variables = Numero_Concatenaciones_por_Opcion[0];    
-    let variables = "";
-    for (let i = 0; i < Numero_Variables; i++) {
-        variables +=`class(*), allocatable :: s${i}\n`
+}
+
+// generacion de variables concatenadas ej: s0,s1,s2,s3 => concatenarlas como return
+function EleccionTipo(expresion) {
+    if (expresion.expr instanceof String) {
+        return "character(len=:), allocatable";
+    } else {
+        return "No es un string";
     }
+}
+let variables = "";
+
+function generarVariablesLexemas(Lista_Opciones){
+    variables = "";
+    Lista_Opciones.forEach((Opcion,i) => {
+        Opcion.exprs.forEach((expresion,j) => {
+            variables +=`${EleccionTipo(expresion)} :: s${i}${j}\n`
+       }); 
+    });
     return variables; // generará variables polimórficas
 }
 
+// Acciones semánticas f0, f1 f2 ... ó posibles retornos
 
-// a = "hola" ever / jonas "que" "olga"
+function CrearAcciones(Acciones){
+    let codigo = ""
+    for (let i = 0; i < Acciones.length; i++) { 
+        codigo +=`
+        function f${i}() result(res)
+        ${Accion[i]}
+        end function f${i}
+        `
+    }
+    return codigo
+}
 
+function Elegir_Retorno_res(){
 
-export {funciones,CrearGrupos,generarVariablesLexemas}
+}
+
+export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones}

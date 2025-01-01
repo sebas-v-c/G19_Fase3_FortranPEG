@@ -1,5 +1,5 @@
 import Visitor from './Visitor.js';
-import {funciones, CrearGrupos,generarVariablesLexemas} from '../utils.js'
+import {funciones, CrearGrupos,generarVariablesLexemas, Elegir_Retorno_res, CrearAcciones} from '../utils.js'
 import * as n from './CST.js';
 
 /*
@@ -14,9 +14,15 @@ export default class Tokenizer extends Visitor {
     constructor(){
         super();
         this.primera = true; // verificar primer produccion
+
+        // Grupos
         this.contador_grupos = -1
         this.grupos = []   // codigo de los grupos
-        
+
+        // Acciones semánticas
+        this.Contador_Acciones = -1
+        this.Acciones = []   // codigo de los grupos
+
     }
 
     Generar_Codigo(grammar) {
@@ -30,10 +36,10 @@ export default class Tokenizer extends Visitor {
         integer, private :: cursor
         character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
         ! variables globales
-        ${node.CodigoGlobal ? node.CodigoGlobal[0] : undefined} 
+        ${node.CodigoGlobal ? node.CodigoGlobal[0] : ""} 
         contains
         ! Funciones globales
-        ${node.CodigoGlobal ? node.CodigoGlobal[1] : undefined} 
+        ${node.CodigoGlobal ? node.CodigoGlobal[1] : ""} 
         subroutine parse(cad) result(res)
             character(len=:), allocatable, intent(in) :: cad
             entrada = cad
@@ -44,6 +50,8 @@ export default class Tokenizer extends Visitor {
         ! funciones útiles
         ${funciones}
         ${node.Reglas.map((produccion)=>produccion.accept(this)).join('\n')}
+        ! Acciones
+        ${CrearAcciones(this.Acciones)}
         ! grupos
         ${CrearGrupos(this.grupos)}
         end module parser
@@ -54,7 +62,7 @@ export default class Tokenizer extends Visitor {
         //snode.expr // lista de opciones
         let str = `
 recursive function ${node.id}() result(res)
-    ${generarVariablesLexemas(node.expr.exprs)}
+    ${generarVariablesLexemas(node.expr.exprs)} 
     integer :: no_caso
     logical :: temporal  ! para el ?
  
@@ -72,7 +80,6 @@ END function ${node.id}
     this.primera = false;
     return str;
     }
-
 
 
     visitOpciones(node) {
@@ -98,7 +105,13 @@ END function ${node.id}
     }
     
     visitUnion(node) {
-        return `${node.exprs.map((expr) => expr.accept(this)).join('\n')}`
+        return `${node.exprs.map((expr) => expr.accept(this)).join('\n')} \n${node.Predicado? node.Predicado.accept(this): Elegir_Retorno_res()}`  // expr.accept(this) sería la escritura de las expresiones
+    }
+
+    visitPredicado(node){ // Este asigna el retorno por medio de accion semántica
+        this.Contador_Acciones++;
+        this.Acciones.push(node.Declarion_res+":: res\n"+node.codigo); // Guardamos el código
+        return `res = f${this.Contador_Acciones}()` 
     }
 
     visitExpresion(node) {

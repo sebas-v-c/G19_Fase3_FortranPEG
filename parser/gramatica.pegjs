@@ -1,7 +1,7 @@
 {{
     import { ids, usos} from '../index.js'
     import { ErrorReglas } from './error.js';
-    import { errores } from '../index.js'
+    import { errores } from '../index.js'ewi
     import * as n from '../parser/visitor/CST.js';
 }}
 
@@ -22,19 +22,25 @@ gramatica
     return new n.Gramatica(codigo, prods);
   }
 
-// Acciones semánticas
+// ------- Acciones semánticas -------
 CodigoGlobal
   = "{" antes:$(. !"contains")* [ \t\n\r]* "contains" [ \t\n\r]* despues:$[^}]* "}" {
     return [antes,despues]
 }
 
 Declaracion_res
-  = t:$(. !"::")+ [ \t\n\r]* "::" [ \t\n\r]* "res" 
+  = t:$(. !"::")+ [ \t\n\r]* "::" [ \t\n\r]* "res" {
+  return t.trim();
+}
 
 predicado
-  = "{" [ \t\n\r]* returnType:Declaracion_res code:$[^}]* "}"
-// Acciones semánticas
+  = "{" [ \t\n\r]* Declarion_res:Declaracion_res codigo:$[^}]* "}"{
+    return new n.Predicate(Declarion_res, codigo, {})
+}
+// ------- Acciones semánticas -------
 
+
+// ------- Producciones -------
 producciones
   = _ id:identificador _ alias:$(literales)? _ "=" _ expr:opciones (_";")? {
     ids.push(id);

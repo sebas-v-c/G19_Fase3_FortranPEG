@@ -4,6 +4,7 @@ export default class Visitor {
 	visitProducciones(node) {}
 	visitOpciones(node) {}
 	visitUnion(node) {}
+	visitPredicado(node){}
 	visitExpresion(node) {}
 	visitString(node) {}
 	visitAny(node) {}
