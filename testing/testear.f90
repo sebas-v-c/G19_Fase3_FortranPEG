@@ -1,29 +1,35 @@
-program test
-	use parser
-	implicit none
-	character(len=100) :: filename
-	character(len=:), allocatable :: input
-	integer :: u, len
-	logical :: exists
+program imprimirclass
+  implicit none
 
-	if (command_argument_count() == 0) then
-		print *, "error: no input file"
-		stop
-	end if
+  class(*), allocatable :: mivariable
 
-	call get_command_argument(1, filename)
+  ! asignar diferentes valores para probar
+  if (allocated(mivariable)) deallocate(mivariable)  ! desasignar memoria antes de asignar
+  allocate(mivariable, source=42)            ! entero
+  call imprimir(mivariable)
 
-	inquire(file=filename, exist=exists, size=len)
-	if (exists) then
-		open (1, file=filename, status='old', action='read', access='stream', form='unformatted')
-		allocate (character(len=len) :: input)
-        read (1) input
-		print *, parse(input)
-	else
-		print *, "error: file is not present"
-		stop
-	end if
+  if (allocated(mivariable)) deallocate(mivariable)  ! desasignar memoria antes de asignar
+  allocate(mivariable, source=3.14)         ! número real
+  call imprimir(mivariable)
 
-	close(u)
+  if (allocated(mivariable)) deallocate(mivariable)  ! desasignar memoria antes de asignar
+  allocate(mivariable, source="hola mundo") ! cadena de texto
+  call imprimir(mivariable)
 
-end program test
+contains
+
+  subroutine imprimir(variable)
+    class(*), intent(in) :: variable
+    select type (variable)
+      type is (integer)
+        print *, "integer: ", variable
+      type is (real)
+        print *, "real: ", variable
+      type is (character(*))
+        print *, "character: ", variable
+      class default
+        print *, "tipo desconocido o no manejado."
+    end select
+  end subroutine imprimir
+
+end program imprimirclass
