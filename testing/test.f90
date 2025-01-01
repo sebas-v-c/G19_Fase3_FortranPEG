@@ -18,7 +18,7 @@ program test
 		open (1, file=filename, status='old', action='read', access='stream', form='unformatted')
 		allocate (character(len=len) :: input)
         read (1) input
-		call parse(input)
+	    print *,parse(input)
 
 	else
 		print *, "error: file is not present"

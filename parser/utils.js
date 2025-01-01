@@ -110,7 +110,14 @@ function aceptarRango(inicio, final) result(accept)
     end if
     !lexeme = consume(1)
     accept = .true.
-end function aceptarRango`
+end function aceptarRango
+
+function ConsumirEntrada() result(Expresion)
+    character(len=:), allocatable :: Expresion
+    Expresion = entrada(InicioLexema:cursor - 1) 
+end function ConsumirEntrada
+
+`
 
 function CrearGrupos(grupos){
     return grupos.map((funcion,index) => `
@@ -175,6 +182,7 @@ function CrearAcciones(Acciones){
 }
 
 function Casteo(Tipo_de_la_Variable){ // Todo a retornará a string
+    return ""
     
 }
 

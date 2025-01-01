@@ -75,8 +75,8 @@ export class Expresion extends Node {
 		this.qty = qty;
     }
 
-    accept(visitor) {
-        return visitor.visitExpresion(this);
+    accept(visitor, caso=undefined, Corr_Expr=undefined) {
+        return visitor.visitExpresion(this,caso,Corr_Expr);
     }
 }
     

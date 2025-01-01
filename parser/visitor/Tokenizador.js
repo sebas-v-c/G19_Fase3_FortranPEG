@@ -35,7 +35,7 @@ export default class Tokenizer extends Visitor {
         return `
 module parser
 implicit none
-integer, private :: cursor
+integer, private :: cursor, InicioLexema, GuardarPunto
 character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
 ! variables globales
 ${node.CodigoGlobal ? node.CodigoGlobal[0] : ""} 
@@ -44,7 +44,7 @@ contains
 ${node.CodigoGlobal ? node.CodigoGlobal[1] : ""} 
 function parse(cad) result(res)
     character(len=:), allocatable, intent(in) :: cad
-    ${node.Reglas[0].expr.exprs[0].Predicado? node.Reglas[0].expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable"} res
+    ${node.Reglas[0].expr.exprs[0].Predicado? node.Reglas[0].expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable ::"} res
     entrada = cad
     cursor = 1
         
@@ -66,11 +66,11 @@ end module parser
         let str = `
 recursive function ${node.id}() result(res)
     ${generarVariablesLexemas(node.expr.exprs)} 
-    ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable"} res
+    ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable ::"} res
     integer :: no_caso
     logical :: temporal  ! para el ?
  
-    
+        GuardarPunto = cursor
         ${node.expr.accept(this)}
     ${
         this.primera ? `
@@ -95,6 +95,7 @@ END function ${node.id}
                     .map(
                         (expr, i) => `
                         case(${i})
+                            cursor = GuardarPunto
                             ${expr.accept(this,i)}
                             exit
                         `
@@ -110,7 +111,7 @@ END function ${node.id}
     }
     
     visitUnion(node,caso) {
-        return `${node.exprs.map((expr) => expr.accept(this)).join('\n')} \n${node.Predicado? node.Predicado.accept(this): Elegir_Retorno_res(node.exprs.length,caso)}`  // expr.accept(this) sería la escritura de las expresiones
+        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this): Elegir_Retorno_res(node.exprs.length,caso)}`  // expr.accept(this) sería la escritura de las expresiones
     }
 
     visitPredicado(node){ // Este asigna el retorno por medio de accion semántica
@@ -119,10 +120,11 @@ END function ${node.id}
         return `res = f${this.Contador_Acciones}()` 
     }
 
-    visitExpresion(node) {
+    visitExpresion(node,caso,index) {
         switch (node.qty) {   // cerraduras y contadores +, *, ?, conteo
             case '+':
                 return `
+                InicioLexema = cursor
                 if (.not. (${node.expr.accept(this)})) then
                     cycle
                 end if
@@ -131,24 +133,32 @@ END function ${node.id}
                         exit
                     end if
                 end do
+                s${caso}${index} = ConsumirEntrada()
+
                 `;
             case '*':
                 return `
+                InicioLexema = cursor
                 do while (len(entrada) >= cursor)
                     if (.not. (${node.expr.accept(this)})) then
                         exit
                     end if
                 end do
+                s${caso}${index} = ConsumirEntrada()
                 `;
             case '?':
                 return `
+                InicioLexema = cursor
                 temporal = ${node.expr.accept(this)}
+                s${caso}${index} = ConsumirEntrada()
                 `;
             default:
                 return `
+                InicioLexema = cursor
                 if (.not. (${node.expr.accept(this)})) then
                     cycle
                 end if
+                s${caso}${index} = ConsumirEntrada()
                 `;
         }
     }
