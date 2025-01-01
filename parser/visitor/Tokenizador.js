@@ -121,6 +121,7 @@ END function ${node.id}
     }
 
     visitExpresion(node,caso,index) {
+        console.log(node.qty)
         switch (node.qty) {   // cerraduras y contadores +, *, ?, conteo
             case '+':
                 return `
@@ -152,7 +153,53 @@ END function ${node.id}
                 temporal = ${node.expr.accept(this)}
                 s${caso}${index} = ConsumirEntrada()
                 `;
+
             default:
+                if (node.qty.startsWith('|') && node.qty.endsWith('|')) {
+                    // Extract range bounds from |n..m|, |n..|, or |..m|
+                    const rangeMatch = /\|(\d*)\.\.(\d*)\|/.exec(node.qty);
+                    if (rangeMatch) {
+                        const lowerBound = rangeMatch[1] ? parseInt(rangeMatch[1], 10) : 0; // Default to 0 if not specified
+                        const upperBound = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : null; // Null means no upper limit
+                        let fortranCode = '';
+
+                        // Generate Fortran code for the lower bound
+                        if (lowerBound > 0) {
+                            fortranCode += `
+                                do i = 1, ${lowerBound}
+                                    if (.not. (${node.expr.accept(this)})) then
+                                        exit
+                                    end if
+                                end do
+                    `;
+                }
+
+                // Generate Fortran code for the upper bound
+                if (upperBound !== null) {
+                    fortranCode += `
+                    do i = ${lowerBound + 1}, ${upperBound}
+                        if (.not. (${node.expr.accept(this)})) then
+                            exit
+                        end if
+                    end do
+                    `;
+                } else {
+                    // Handle |n..| case (no upper limit)
+                    fortranCode += `
+                    do while (len(entrada) >= cursor)
+                        if (.not. (${node.expr.accept(this)})) then
+                            exit
+                        end if
+                    end do
+                    `;
+                }
+
+                return fortranCode;
+            }
+        }
+
+
+
                 return `
                 InicioLexema = cursor
                 if (.not. (${node.expr.accept(this)})) then
