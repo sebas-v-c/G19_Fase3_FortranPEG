@@ -120,21 +120,7 @@ end function ConsumirEntrada
 `
 
 function CrearGrupos(grupos){
-    return grupos.map((funcion,index) => `
-recursive function grupo${index}() result(aceptacion)
-    logical :: aceptacion
-    integer :: no_caso
-    logical :: temporal  
-
-    aceptacion = .false.
-    `+
-    funcion
-    +`
-    aceptacion = .true.
-    return
-END function
-    `
-).join('\n')
+    return grupos.map((funcion) => funcion).join('\n')
 }
 
 // Tipo Retorno
@@ -148,8 +134,10 @@ function EleccionTipo(expresion, Producciones_Retornos) {
         return "character(len=:), allocatable";
     }else if(expresion.expr instanceof n.idRel){
         return Producciones_Retornos.get(expresion.expr.val);
-    } else {
-        return "No es un string";
+    } else if(expresion.expr instanceof n.grupo) {
+        return expresion.expr.expr.exprs[0].Predicado? expresion.expr.expr.exprs[0].Predicado.Declarion_res : "character(len=:), allocatable"
+    }else {
+        return "Error";
     }
 }
 
@@ -166,7 +154,7 @@ function generarVariablesLexemas(Lista_Opciones, Producciones_Retornos){
        }); 
        Tipos_Variables.push(Tipos_Expresiones);
     });
-    return variables; // generará variables polimórficas
+    return variables; // generará variables
 }
 
 // Acciones semánticas f0, f1 f2 ... ó posibles retornos de las producciones

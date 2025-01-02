@@ -163,7 +163,7 @@ export class grupo extends Node {
 
     constructor(expr, qty) {
         super();
-        this.expr = expr;
+        this.expr = expr; // Objeto Opciones
 		this.qty = qty;
     }
 

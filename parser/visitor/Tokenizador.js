@@ -21,8 +21,12 @@ import * as n from './CST.js';
 export default class Tokenizer extends Visitor {
     constructor(){
         super();
-        // Producciones y retornos
+        //----- Retornos -----
+        // Producciones y retornos de grupos
         this.producciones = new Map();
+        this.grupos_retorno = new Map();
+
+        // ----- Generación de funciones -----
         // Grupos
         this.contador_grupos = -1
         this.grupos = []   // codigo de los grupos
@@ -180,7 +184,21 @@ END function ${node.id}
 
         this.contador_grupos++;
 
-        this.grupos.push(node.expr.accept(this));
+        this.grupos.push( // Guardamos la funcion
+            `
+function grupo${this.contador_grupos}() result(res)
+    ${generarVariablesLexemas(node.expr.exprs,this.producciones)} 
+    ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable ::"} res
+    integer :: no_caso
+    logical :: temporal  ! para el ?
+ 
+        GuardarPunto = cursor
+        ${node.expr.accept(this)}
+
+    return
+END function grupo${this.contador_grupos}
+        `        
+        ); // Guardamos opciones
         return `grupo${this.contador_grupos}()`;
     }
 
