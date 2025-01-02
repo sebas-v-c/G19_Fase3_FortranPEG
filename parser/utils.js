@@ -1,6 +1,6 @@
 // Importaciones
 
-import { String } from "./visitor/CST.js";
+import * as n from "./visitor/CST.js";
 
 // Generacion de código
 let funciones =
@@ -143,39 +143,41 @@ function Generar_Variable_Res(){
 }
 
 // generacion de variables concatenadas ej: s0,s1,s2,s3 => concatenarlas como return
-function EleccionTipo(expresion) {
-    if (expresion.expr instanceof String) {
+function EleccionTipo(expresion, Producciones_Retornos) {
+    if (expresion.expr instanceof n.String) {
         return "character(len=:), allocatable";
+    }else if(expresion.expr instanceof n.idRel){
+        return Producciones_Retornos.get(expresion.expr.val);
     } else {
         return "No es un string";
     }
 }
 
 let Tipos_Variables = []
-function generarVariablesLexemas(Lista_Opciones){
+function generarVariablesLexemas(Lista_Opciones, Producciones_Retornos){
     let variables = "";
     Tipos_Variables = []
     Lista_Opciones.forEach((Opcion,i) => {
         let Tipos_Expresiones = [];
         Opcion.exprs.forEach((expresion,j) => {
-            Tipos_Expresiones.push(EleccionTipo(expresion));
+            Tipos_Expresiones.push(EleccionTipo(expresion, Producciones_Retornos));
             
-            variables +=`${EleccionTipo(expresion)} :: s${i}${j}\n`
+            variables +=`${EleccionTipo(expresion,Producciones_Retornos)} :: s${i}${j}\n`
        }); 
        Tipos_Variables.push(Tipos_Expresiones);
     });
     return variables; // generará variables polimórficas
 }
 
-// Acciones semánticas f0, f1 f2 ... ó posibles retornos
+// Acciones semánticas f0, f1 f2 ... ó posibles retornos de las producciones
 
 function CrearAcciones(Acciones){
     let codigo = ""
     for (let i = 0; i < Acciones.length; i++) { 
         codigo +=`
-        function f${i}() result(res)
-        ${Acciones[i]}
-        end function f${i}
+function f${i}() result(res)
+    ${Acciones[i]}
+end function f${i}
         `
     }
     return codigo
@@ -198,4 +200,81 @@ function Elegir_Retorno_res(numero_Concatenaciones, numero_Caso){
     return retorno;
 }
 
-export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones}
+// Retornos de producciones a una variable específica
+
+function Retorno_Produccion_Mas(expresion, caso, index,visitor){ // cerradura +
+    if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
+        return `
+        InicioLexema = cursor
+        if (.not. ${expresion.accept(visitor)}) then
+            cycle
+        end if
+        do while (len(entrada) >= cursor)
+            if (.not. ${expresion.accept(visitor)}) then
+                exit
+            end if
+        end do
+        s${caso}${index} = ConsumirEntrada()
+                `;
+    }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
+        return `
+        s${caso}${index} = ${expresion.accept(visitor)}
+        do while (len(entrada) >= cursor)
+            s${caso}${index} =s${caso}${index}//${expresion.accept(visitor)}
+        end do
+        `
+    }
+}
+
+function Retorno_Produccion_Kleene(expresion, caso, index,visitor){ // cerradura *
+    if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
+        return `
+        InicioLexema = cursor
+        do while (len(entrada) >= cursor)
+            if (.not. ${expresion.accept(visitor)}) then
+                exit
+            end if
+        end do
+        s${caso}${index} = ConsumirEntrada()
+                `;
+    }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
+        return `
+        do while (len(entrada) >= cursor)
+            s${caso}${index} =s${caso}${index}//${expresion.accept(visitor)}
+        end do
+        `
+    }
+}
+
+function Retorno_Produccion_Condicional(expresion, caso, index,visitor){ // cerradura ?
+    if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
+        return `
+        InicioLexema = cursor
+        temporal = ${expresion.accept(visitor)}
+        s${caso}${index} = ConsumirEntrada()
+                `;
+    }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
+        return `
+        s${caso}${index} = ${expresion.accept(visitor)}
+        `
+    }
+}
+
+function Retorno_Produccion_Default(expresion, caso, index, visitor){ // cerradura sin contador
+    
+    if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
+        return `
+        InicioLexema = cursor
+        if (.not. ${expresion.accept(visitor)}) then
+            cycle
+        end if
+        s${caso}${index} = ConsumirEntrada()
+                `;
+    }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
+        return `
+        s${caso}${index} = ${expresion.accept(visitor)}
+        `
+    }
+}
+
+export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default}

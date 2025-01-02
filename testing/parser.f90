@@ -14,7 +14,7 @@ module parser
         entrada = cad
         cursor = 1
             
-        res = asdsda() ! esperamos el retorno
+        res = jerry() ! esperamos el retorno
     end function parse
     ! funciones útiles
     
@@ -132,7 +132,7 @@ module parser
     
     
     
-    recursive function asdsda() result(res)
+    recursive function jerry() result(res)
         character(len=:), allocatable :: s00
      
         character(len=:), allocatable :: res
@@ -147,11 +147,41 @@ module parser
                             case(0)
                                 cursor = GuardarPunto
                                 
-                    InicioLexema = cursor
-                    if (.not. (aceptarLiterales("jorge","null"))) then
-                        cycle
-                    end if
-                    s00 = ConsumirEntrada()
+            s00 = asd()
+             
+    res = s00
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function jerry
+            
+    
+    recursive function asd() result(res)
+        character(len=:), allocatable :: s00
+     
+        character(len=:), allocatable :: res
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 1 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("rojas","null")) then
+                cycle
+            end if
+            s00 = ConsumirEntrada()
                      
     res = s00
                                 exit
@@ -161,8 +191,9 @@ module parser
                 end select
             end do
             
+    
         return
-    END function asdsda
+    END function asd
             
     ! Acciones
     

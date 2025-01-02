@@ -1,5 +1,5 @@
 import Visitor from './Visitor.js';
-import {funciones, CrearGrupos,generarVariablesLexemas, Elegir_Retorno_res, CrearAcciones} from '../utils.js'
+import {funciones, CrearGrupos,generarVariablesLexemas, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default} from '../utils.js'
 import * as n from './CST.js';
 
 /*
@@ -7,14 +7,22 @@ import * as n from './CST.js';
         print *, "Parseo, exitoso !!"
     else
         print *, "Parser fallo, revisa que paso !!"
-    end if
- */
+    end if    
+    ${
+        this.primera ? `
+        if (cursor > len(entrada)) then
+            res = .true.
+        end if` : "aceptacion = .true."
+    }  
+    */
+
+
 
 export default class Tokenizer extends Visitor {
     constructor(){
         super();
-        this.primera = true; // verificar primer produccion
-
+        // Producciones y retornos
+        this.producciones = new Map();
         // Grupos
         this.contador_grupos = -1
         this.grupos = []   // codigo de los grupos
@@ -22,9 +30,6 @@ export default class Tokenizer extends Visitor {
         // Acciones semánticas
         this.Contador_Acciones = -1
         this.Acciones = []   // codigo de los grupos
-
-        this.Tipo_Retorno_parse = ""
-
     }
 
     Generar_Codigo(grammar) {
@@ -32,6 +37,9 @@ export default class Tokenizer extends Visitor {
     }
 
     visitGramatica(node){
+        node.Reglas.forEach(Produccion => { // Guardamos nombre de produccion como clave, y el retorno de la produccion
+            this.producciones.set(Produccion.id,Produccion.expr.exprs[0].Predicado? Produccion.expr.exprs[0].Predicado.Declarion_res: "character(len=:), allocatable");
+        });
         return `
 module parser
 implicit none
@@ -65,27 +73,19 @@ end module parser
         //node.expr // lista de opciones
         let str = `
 recursive function ${node.id}() result(res)
-    ${generarVariablesLexemas(node.expr.exprs)} 
+    ${generarVariablesLexemas(node.expr.exprs,this.producciones)} 
     ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable ::"} res
     integer :: no_caso
     logical :: temporal  ! para el ?
  
         GuardarPunto = cursor
         ${node.expr.accept(this)}
-    ${
-        this.primera ? `
-        if (cursor > len(entrada)) then
-            res = .true.
-        end if` : "aceptacion = .true."
-        }  
+
     return
 END function ${node.id}
         `
-    this.primera = false;
     return str;
     }
-
-
     visitOpciones(node) {
 
         return `
@@ -120,52 +120,21 @@ END function ${node.id}
         return `res = f${this.Contador_Acciones}()` 
     }
 
-    visitExpresion(node,caso,index) {
+    visitExpresion(node,caso,index) { // caso signifca el numero de caso que esta en el or e index es el numero de la expresion
         switch (node.qty) {   // cerraduras y contadores +, *, ?, conteo
             case '+':
-                return `
-                InicioLexema = cursor
-                if (.not. (${node.expr.accept(this)})) then
-                    cycle
-                end if
-                do while (len(entrada) >= cursor)
-                    if (.not. (${node.expr.accept(this)})) then
-                        exit
-                    end if
-                end do
-                s${caso}${index} = ConsumirEntrada()
-
-                `;
+                return Retorno_Produccion_Mas(node.expr,caso,index,this);
             case '*':
-                return `
-                InicioLexema = cursor
-                do while (len(entrada) >= cursor)
-                    if (.not. (${node.expr.accept(this)})) then
-                        exit
-                    end if
-                end do
-                s${caso}${index} = ConsumirEntrada()
-                `;
+                return Retorno_Produccion_Kleene(node.expr,caso,index,this);
             case '?':
-                return `
-                InicioLexema = cursor
-                temporal = ${node.expr.accept(this)}
-                s${caso}${index} = ConsumirEntrada()
-                `;
+                return Retorno_Produccion_Condicional(node.expr,caso,index,this);
             default:
-                return `
-                InicioLexema = cursor
-                if (.not. (${node.expr.accept(this)})) then
-                    cycle
-                end if
-                s${caso}${index} = ConsumirEntrada()
-                `;
+                return Retorno_Produccion_Default(node.expr,caso,index,this);
         }
     }
 
     visitString(node) {
-        return `aceptarLiterales("${node.val}","${node.isCase}")`;
-        //return this.renderQuantifierOption(node.qty, condition, node.val.length)
+        return `aceptarLiterales("${node.val}","${node.isCase}")`; 
     }
 
     visitAny(node) { 
