@@ -35,7 +35,7 @@ Declaracion_res
 
 predicado
   = "{" [ \t\n\r]* Declarion_res:Declaracion_res codigo:$[^}]* "}"{
-    return new n.Predicado(Declarion_res, codigo, {})
+    return new n.Predicado(Declarion_res, codigo, [])
 }
 // ------- Acciones semánticas -------
 
@@ -54,7 +54,12 @@ opciones
 
 union
   = expr:expresion rest:(_ @expresion !(_ literales? _ "=") )* accion:(_ @predicado)? {
-    return new n.Union([expr, ...rest], accion);
+
+    let expresiones = [expr, ...rest]
+    let Parametros = expresiones.map(expresion => {return expresion.label.slice(0, -1)})
+    Parametros = Parametros.filter(label => typeof label === "string" && label !== "!" && label !== "$" && label !== "&" && label !== "@")    
+    if(accion !== null){  accion.parametros = Parametros}
+    return new n.Union(expresiones, accion);
   }
 
 expresion
@@ -113,7 +118,7 @@ corchetes
 rango
     = inicio:$caracter "-" fin:$caracter {
         return new  n.rango(inicio, fin);
-    }
+}
 
 // Regla para caracteres individuales
 caracter

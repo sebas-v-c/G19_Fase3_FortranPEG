@@ -109,6 +109,7 @@ function aceptarRango(inicio, final) result(accept)
         return
     end if
     !lexeme = consume(1)
+    cursor = cursor +1
     accept = .true.
 end function aceptarRango
 
@@ -130,11 +131,12 @@ function Generar_Variable_Res(){
 
 // generacion de variables concatenadas ej: s0,s1,s2,s3 => concatenarlas como return
 function EleccionTipo(expresion, Producciones_Retornos) {
-    if (expresion.expr instanceof n.String) {
+
+    if (expresion.expr instanceof n.String || expresion.expr instanceof n.Corchetes) {
         return "character(len=:), allocatable";
     }else if(expresion.expr instanceof n.idRel){
         return Producciones_Retornos.get(expresion.expr.val);
-    } else if(expresion.expr instanceof n.grupo) {
+    } else if(expresion.expr instanceof n.grupo ) {
         return expresion.expr.expr.exprs[0].Predicado? expresion.expr.expr.exprs[0].Predicado.Declarion_res : "character(len=:), allocatable"
     }else {
         return "Error";
@@ -159,15 +161,17 @@ function generarVariablesLexemas(Lista_Opciones, Producciones_Retornos){
 
 // Acciones semánticas f0, f1 f2 ... ó posibles retornos de las producciones
 
+function generarVariablesEtiquetas(caso,Parametros_Func){
+    return Parametros_Func.map((Declarar, i) => {
+        return `${Tipos_Variables[caso][i]} :: ${Declarar}`
+    }) 
+}
+
+
 function CrearAcciones(Acciones){
-    let codigo = ""
-    for (let i = 0; i < Acciones.length; i++) { 
-        codigo +=`
-function f${i}() result(res)
-    ${Acciones[i]}
-end function f${i}
-        `
-    }
+    let codigo = Acciones.map((codigo, i) => {
+        return codigo
+    }).join("\n");
     return codigo
 }
 
@@ -176,12 +180,15 @@ function Casteo(Tipo_de_la_Variable){ // Todo a retornará a string
     
 }
 
-function Elegir_Retorno_res(numero_Concatenaciones, numero_Caso){
-    let retorno = "res = "
+function Elegir_Retorno_res(Lista_Concatenaciones, numero_Caso){
 
-    for (let i = 0; i < numero_Concatenaciones; i++) {
+    let retorno = "res = "
+    let i = 0
+    Lista_Concatenaciones.forEach(expresion => {
+        console.log("->"+expresion.label+"<-")
         retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`
-    }
+        i++;
+    });
     
     retorno = retorno.slice(0, -2);
 
@@ -248,21 +255,85 @@ function Retorno_Produccion_Condicional(expresion, caso, index,visitor){ // cerr
     }
 }
 
-function Retorno_Produccion_Default(expresion, caso, index, visitor){ // cerradura sin contador
-    
-    if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
-        return `
-        InicioLexema = cursor
-        if (.not. ${expresion.accept(visitor)}) then
-            cycle
-        end if
-        s${caso}${index} = ConsumirEntrada()
+function Delimitadores(expresion, qty, caso, index,visitor){
+
+    console.log(expresion)
+    console.log(qty)
+    console.log(caso)
+    console.log(index)
+    console.log(visitor)
+  
+    if (qty.startsWith('|') && qty.endsWith('|')) {
+        qty = qty.replace(/\s/g, '');
+        // Extract range bounds from |n..m|, |n..|, or |..m|
+        const rangeMatch = /\|(\d*)\.\.(\d*)\|/.exec(qty);
+        if (rangeMatch) {
+            console.log("ayyEver que rico");
+            const lowerBound = rangeMatch[1] ? parseInt(rangeMatch[1], 10) : 0; // Default to 0 if not specified
+            const upperBound = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : null; // Null means no upper limit
+            let fortranCode = '';
+
+            // Generate Fortran code for the lower bound
+            if (lowerBound > 0) {
+                fortranCode += `
+                do i = 1, ${lowerBound}
+                    if (.not. (${expresion.accept(visitor)})) then
+                        exit
+                    end if
+                end do
                 `;
-    }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
-        return `
-        s${caso}${index} = ${expresion.accept(visitor)}
-        `
+            }
+
+            // Generate Fortran code for the upper bound
+            if (upperBound !== null) {
+                fortranCode += `
+                do i = ${lowerBound + 1}, ${upperBound}
+                    if (.not. (${expresion.accept(visitor)})) then
+                        exit
+                    end if
+                end do
+                `;
+            } else {
+                // Handle |n..| case (no upper limit)
+                fortranCode += `
+                do while (len(entrada) >= cursor)
+                    if (.not. (${expresion.accept(visitor)})) then
+                        exit
+                    end if
+                end do
+                
+                `;
+            }
+
+            return "\t\tInicioLexema = cursor\n\n\n" +fortranCode + `\n\t\ts${caso}${index} = ConsumirEntrada()`;
+        }
     }
+     return "";
 }
 
-export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default}
+// InicioLexema = cursor ciclos s${caso}${index} = ConsumirEntrada()
+function Retorno_Produccion_Default(expresion, caso, index, visitor,qty){ // cerradura sin contador
+    
+    if (qty){
+        // delimitador
+        let delimitador = Delimitadores(expresion, qty, caso, index,visitor);
+        if (delimitador !== "") return delimitador;
+    }else {
+        if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
+            return `
+            InicioLexema = cursor
+            if (.not. ${expresion.accept(visitor)}) then
+                cycle
+            end if
+            s${caso}${index} = ConsumirEntrada()
+                    `;
+        }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
+            return `
+            s${caso}${index} = ${expresion.accept(visitor)}
+            `
+        }
+    }   
+}
+
+
+export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default, Delimitadores, generarVariablesEtiquetas}

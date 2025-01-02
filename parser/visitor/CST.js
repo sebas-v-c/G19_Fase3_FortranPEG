@@ -61,8 +61,8 @@ export class Predicado {
 		this.parametros = parametros;
     }
 
-    accept(visitor) {
-        return visitor.visitPredicado(this);
+    accept(visitor,Params = undefined, caso = undefined) {
+        return visitor.visitPredicado(this, Params, caso);
     }
 }
     
@@ -71,8 +71,9 @@ export class Expresion extends Node {
     constructor(expr, label, qty) {
         super();
         this.expr = expr;
-		this.label = label;
+		this.label = label; // asersiones, coincidencia, pluck, etiquetas
 		this.qty = qty;
+
     }
 
     accept(visitor, caso=undefined, Corr_Expr=undefined) {
@@ -110,7 +111,7 @@ export class Corchetes extends Node {
 
     constructor(exprs, isCase, qty) {
         super();
-        this.exprs = exprs;
+        this.exprs = exprs; // rango o contenido
 		this.isCase = isCase;
 		this.qty = qty;
     }

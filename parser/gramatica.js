@@ -295,7 +295,7 @@ function peg$parse(input, options) {
   return t.trim();
 };
   var peg$f3 = function(Declarion_res, codigo) {
-    return new n.Predicado(Declarion_res, codigo, {})
+    return new n.Predicado(Declarion_res, codigo, [])
 };
   var peg$f4 = function(id, alias, expr) {
     ids.push(id);
@@ -305,7 +305,12 @@ function peg$parse(input, options) {
     return new n.Opciones([expr, ...rest]);
   };
   var peg$f6 = function(expr, rest, accion) {
-    return new n.Union([expr, ...rest], accion);
+
+    let expresiones = [expr, ...rest]
+    let Parametros = expresiones.map(expresion => {return expresion.label.slice(0, -1)})
+    Parametros = Parametros.filter(label => typeof label === "string" && label !== "!" && label !== "$" && label !== "&" && label !== "@")    
+    if(accion !== null){  accion.parametros = Parametros}
+    return new n.Union(expresiones, accion);
   };
   var peg$f7 = function(label, expr, qty) {
     return new n.Expresion(expr, label, qty);

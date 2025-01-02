@@ -14,7 +14,7 @@ module parser
         entrada = cad
         cursor = 1
             
-        res = jerry() ! esperamos el retorno
+        res = hola() ! esperamos el retorno
     end function parse
     ! funciones útiles
     
@@ -132,10 +132,11 @@ module parser
     
     
     
-    recursive function jerry() result(res)
-        character(len=:), allocatable :: s00
+    recursive function hola() result(res)
+        Error :: s00
      
         character(len=:), allocatable :: res
+        integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
      
@@ -147,8 +148,12 @@ module parser
                             case(0)
                                 cursor = GuardarPunto
                                 
-            s00 = asd()
-             
+                InicioLexema = cursor
+                if (.not. ) then
+                    cycle
+                end if
+                s00 = ConsumirEntrada()
+                         
     res = s00
                                 exit
                             
@@ -159,41 +164,7 @@ module parser
             
     
         return
-    END function jerry
-            
-    
-    recursive function asd() result(res)
-        character(len=:), allocatable :: s00
-     
-        character(len=:), allocatable :: res
-        integer :: no_caso
-        logical :: temporal  ! para el ?
-     
-            GuardarPunto = cursor
-            
-            do no_caso = 0, 1 ! lista de concatenaciones
-                select case(no_caso)
-                    
-                            case(0)
-                                cursor = GuardarPunto
-                                
-            InicioLexema = cursor
-            if (.not. aceptarLiterales("rojas","null")) then
-                cycle
-            end if
-            s00 = ConsumirEntrada()
-                     
-    res = s00
-                                exit
-                            
-                case default
-                    return
-                end select
-            end do
-            
-    
-        return
-    END function asd
+    END function hola
             
     ! Acciones
     

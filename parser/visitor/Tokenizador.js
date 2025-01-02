@@ -1,5 +1,5 @@
 import Visitor from './Visitor.js';
-import {funciones, CrearGrupos,generarVariablesLexemas, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default} from '../utils.js'
+import {funciones, CrearGrupos,generarVariablesLexemas, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default, Delimitadores, generarVariablesEtiquetas} from '../utils.js'
 import * as n from './CST.js';
 
 /*
@@ -15,8 +15,6 @@ import * as n from './CST.js';
         end if` : "aceptacion = .true."
     }  
     */
-
-
 
 export default class Tokenizer extends Visitor {
     constructor(){
@@ -79,6 +77,7 @@ end module parser
 recursive function ${node.id}() result(res)
     ${generarVariablesLexemas(node.expr.exprs,this.producciones)} 
     ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable ::"} res
+    integer :: i
     integer :: no_caso
     logical :: temporal  ! para el ?
  
@@ -110,21 +109,30 @@ END function ${node.id}
             end select
         end do
         `;
-        
         // node.exprs.map((expr) => expr.accept(this)).join('\n');
     }
     
     visitUnion(node,caso) {
-        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this): Elegir_Retorno_res(node.exprs.length,caso)}`  // expr.accept(this) sería la escritura de las expresiones
+        let Parametros = node.exprs.map((expresiones,index) => {return `s${caso}${index}`}).join(", ");
+        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this,Parametros,caso): Elegir_Retorno_res(node.exprs,caso)}`  // expr.accept(this) sería la escritura de las expresiones
     }
 
-    visitPredicado(node){ // Este asigna el retorno por medio de accion semántica
+    visitPredicado(node,Parametros,caso){ // Este asigna el retorno por medio de accion semántica
+        let Parametros_Func = node.parametros.map((label) => {return `${label}`}).join(", ");
         this.Contador_Acciones++;
-        this.Acciones.push(node.Declarion_res+":: res\n"+node.codigo); // Guardamos el código
-        return `res = f${this.Contador_Acciones}()` 
+        this.Acciones.push(
+        `
+function f${this.Contador_Acciones}(${Parametros_Func}) result(res)
+    ${generarVariablesEtiquetas(caso, node.parametros)}
+    ${node.Declarion_res+":: res\n"+node.codigo}
+end function f${this.Contador_Acciones}
+        `    
+        ); // Guardamos el código
+        return `res = f${this.Contador_Acciones}(${Parametros})` 
     }
 
     visitExpresion(node,caso,index) { // caso signifca el numero de caso que esta en el or e index es el numero de la expresion
+
         switch (node.qty) {   // cerraduras y contadores +, *, ?, conteo
             case '+':
                 return Retorno_Produccion_Mas(node.expr,caso,index,this);
@@ -133,7 +141,7 @@ END function ${node.id}
             case '?':
                 return Retorno_Produccion_Condicional(node.expr,caso,index,this);
             default:
-                return Retorno_Produccion_Default(node.expr,caso,index,this);
+                return Retorno_Produccion_Default(node.expr,caso,index,this, node.qty);
         }
     }
 
@@ -146,9 +154,7 @@ END function ${node.id}
     }
 
     visitCorchetes(node) {
-        node.exprs.forEach(expr => { expr.isCase = node.isCase });
-        let conditions = "(" + node.exprs.map((expr) => expr.accept(this)).join(')& \n    .or. (') + ")"
-        return ""
+        
     }
 
     //Solo devuelve las condiciones a cumplirse
