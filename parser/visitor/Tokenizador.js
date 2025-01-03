@@ -165,7 +165,23 @@ end function f${this.Contador_Acciones}
     }
 
     visitCorchetes(node) {
-        
+        // [abc0-9A-Z]
+        let characterClass = [];
+        const set = node.exprs
+            .filter((char) => char instanceof n.literalRango)
+            .map((char) => `'${char.val}'`);
+        const ranges = node.exprs
+            .filter((char) => char instanceof n.rango)
+            .map((range) => range.accept(this)); 
+
+        if (set.length !== 0){
+            characterClass = [`acceptSet([${set.join(',')}])`];
+        }
+        if (ranges.length !== 0){
+            characterClass = [...characterClass, ...ranges];
+        }
+
+        return `(${characterClass.join(' .or. ')})`;
     }
 
     //Solo devuelve las condiciones a cumplirse

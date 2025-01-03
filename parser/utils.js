@@ -118,6 +118,19 @@ function ConsumirEntrada() result(Expresion)
     Expresion = entrada(InicioLexema:cursor - 1) 
 end function ConsumirEntrada
 
+
+function aceptarConjunto(set) result(accept)
+    character(len=1), dimension(:) :: set
+    logical :: accept
+
+    if(.not. (findloc(set, input(cursor:cursor), 1) > 0)) then
+        accept = .false.
+        return
+    end if
+    cursor = cursor + 1
+    accept = .true.
+end function acceptSet
+
 `
 
 function CrearGrupos(grupos){
