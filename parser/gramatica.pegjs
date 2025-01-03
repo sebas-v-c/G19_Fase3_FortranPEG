@@ -120,29 +120,20 @@ conteo = "|" _ (numero / id:identificador) _ "|"
 // delimitador =  "," _ expresion
 
 // Regla principal que analiza corchetes con contenido
-corchetes
-    = "[" contenido:(rango / contenido)+ "]" {
-        return contenido;
-    }
 
-// Regla para validar un rango como [A-Z]
-rango
-    = inicio:$caracter "-" fin:$caracter {
-        return new  n.rango(inicio, fin);
-}
+corchetes 
+    = "[" @contenidoCorchete+ "]"
+
+contenidoCorchete
+    = inicio:$texto "-" final:$texto {
+      return new n.rango(inicio, final)
+    }
+    / $texto
+
 
 // Regla para caracteres individuales
 caracter
     = [a-zA-Z0-9_ ] 
-
-// Coincide con cualquier contenido que no incluya "]"
-contenido
-    = contenido: (corchete / @$texto){
-        return new n.literalRango(contenido);
-    }
-
-corchete
-    = "[" contenido "]"
 
 texto
     = "\\" escape
