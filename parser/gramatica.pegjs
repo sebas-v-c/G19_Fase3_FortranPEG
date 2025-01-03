@@ -80,7 +80,7 @@ etiqueta = eti:(@identificador _ ":")? _ expr:anotado {
   return new n.Etiqueta(expr, eti);
 }
 
-anotado = text:"$"? _ expr:expresiones _ qty:$([?+*]/conteo)? {
+anotado = text:"$"? _ expr:expresiones _ qty:([?+*]/conteo)? {
   return new n.Anotado(expr,qty,text ? true : false);
 }
 
@@ -107,10 +107,10 @@ expresiones
 
 // conteo = "|" parteconteo _ (_ delimitador )? _ "|"
 
-conteo = "|" _ val1:(numero / id:identificador) _ "|" { return new n.Delimitador(val1=val1) }
-        / "|" _ val1:(numero / id:identificador)? _ ranged:".." _ val2:(numero / id2:identificador)? _ "|" { return new n.Delimitador(val1=val1, ranged=true, val2=val2) }
-        / "|" _ val1:(numero / id:identificador)? _ "," _ separator:opciones _ "|" { return new n.Delimitador(val1=val1, separator=separator) }
-        / "|" _ val1:(numero / id:identificador)? _ ".." _ val2:(numero / id2:identificador)? _ "," _ separator:opciones _ "|" { return new n.Delimitador(val1=val1, ranged=true, val2=val2, separator=separator) }
+conteo = "|" _ val1:$(numero / id:identificador) _ "|" { return new n.Delimitador(val1=val1, false, null, null); }
+        / "|" _ val1:$(numero / id:identificador)? _ ranged:".." _ val2:$(numero / id2:identificador)? _ "|" { return new n.Delimitador(val1, true, val2, null, null); }
+        / "|" _ val1:$(numero / id:identificador)? _ "," _ separator:$opciones _ "|" { console.log("AAAA");return new n.Delimitador(val1, false, "", separator); }
+        / "|" _ val1:$(numero / id:identificador)? _ ranged:".." _ val2:$(numero / id2:identificador)? _ "," _ separator:$opciones _ "|" { return new n.Delimitador(val1, true, val2, separator); }
 
 // parteconteo = identificador
 //             / [0-9]? _ ".." _ [0-9]?

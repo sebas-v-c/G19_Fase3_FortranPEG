@@ -4,17 +4,23 @@ module parser
     integer, private :: cursor, InicioLexema, GuardarPunto
     character(len=:), allocatable, private :: entrada, esperado, verificador ! entrada es la entrada a consumir
     ! variables globales
-     
+    
+        type :: operation
+            character(len=:), allocatable :: operator
+            integer :: operand
+        end type
+    
+        
     contains
     ! Funciones globales
      
     function parse(cad) result(res)
         character(len=:), allocatable, intent(in) :: cad
-        character(len=:), allocatable :: res
+        integer :: res
         entrada = cad
         cursor = 1
             
-        res = ppruebas() ! esperamos el retorno
+        res = pExpression() ! esperamos el retorno
     end function parse
     ! funciones útiles
     
@@ -164,198 +170,32 @@ module parser
     
     
     
-    recursive function ppruebas() result(res)
-        character(len=:), allocatable :: s00
-    character(len=:), allocatable :: s01
-    character(len=:), allocatable :: s02
-    character(len=:), allocatable :: s10
-    character(len=:), allocatable :: s11
-    character(len=:), allocatable :: s12
-    character(len=:), allocatable :: s20
-    character(len=:), allocatable :: s21
-    character(len=:), allocatable :: s30
-    character(len=:), allocatable :: s31
-    character(len=:), allocatable :: s40
-    character(len=:), allocatable :: s41
-    character(len=:), allocatable :: s42
-    character(len=:), allocatable :: s50
-    character(len=:), allocatable :: s60
-    character(len=:), allocatable :: s70
-    character(len=:), allocatable :: s80
+    recursive function pExpression() result(res)
+        integer :: s00
+    type(operation) :: s01
      
-        character(len=:), allocatable :: res
+        integer :: res
         integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
      
             GuardarPunto = cursor
             
-            do no_caso = 0, 9 ! lista de concatenaciones
+            do no_caso = 0, 1 ! lista de concatenaciones
                 select case(no_caso)
                     
                             case(0)
                                 cursor = GuardarPunto
                                 
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("a","null")) then
-                    cycle
-                end if
-                s00 = ConsumirEntrada()
-                        
+                s00 = pTerm()
+                
     
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("-","null")) then
-                    cycle
-                end if
-                verificador = ConsumirEntrada()
-                if (len(verificador) < 0) then
-                    cursor = InicioLexema
-                end if
-                        
-    
-                s02 = pnum()
-                 
-    res = s00//s01//s02
-                                exit
-                            
-    
-                            case(1)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("b","null")) then
-                    cycle
-                end if
-                s10 = ConsumirEntrada()
-                        
-    
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("-","null")) then
-                    cycle
-                end if
-                verificador = ConsumirEntrada()
-                if (len(verificador) > 0) then
-                    cursor = InicioLexema
-                end if
-                        
-    
-                s12 = pnum()
-                 
-    res = s10//s11//s12
-                                exit
-                            
-    
-                            case(2)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("c","null")) then
-                    cycle
-                end if
-                s20 = ConsumirEntrada()
-                        
-    
-                InicioLexema = cursor
-                if (.not. aceptarPunto()) then
-                    cycle
-                end if
-                s21 = ConsumirEntrada()
-                         
-    res = s20//s21
-                                exit
-                            
-    
-                            case(3)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("d","null")) then
-                    cycle
-                end if
-                s30 = ConsumirEntrada()
-                        
-    
-            s31 = pnum()
+            s01 = ""
             do while (len(entrada) >= cursor)
-                s31 =s31//pnum()
+                s01 =s01//pExpressionTail()
             end do
              
-    res = s30//s31
-                                exit
-                            
-    
-                            case(4)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("e","null")) then
-                    cycle
-                end if
-                s40 = ConsumirEntrada()
-                        
-    
-                InicioLexema = cursor
-                if (.not. (aceptarConjunto([char(32)],"null"))) then
-                    cycle
-                end if
-                s41 = ConsumirEntrada()
-                        
-    
-                s42 = pnum()
-                 
-    res = s40//s42
-                                exit
-                            
-    
-                            case(5)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("f","null")) then
-                    cycle
-                end if
-                s50 = ConsumirEntrada()
-                         
-    res = s50
-                                exit
-                            
-    
-                            case(6)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("g","null")) then
-                    cycle
-                end if
-                s60 = ConsumirEntrada()
-                         
-    res = s60
-                                exit
-                            
-    
-                            case(7)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("h","null")) then
-                    cycle
-                end if
-                s70 = ConsumirEntrada()
-                         
-    res = s70
-                                exit
-                            
-    
-                            case(8)
-                                cursor = GuardarPunto
-                                
-                InicioLexema = cursor
-                if (.not. aceptarLiterales("i","null")) then
-                    cycle
-                end if
-                s80 = ConsumirEntrada()
-                         
-    res = s80
+    res = f0(s00,s01)
                                 exit
                             
                 case default
@@ -365,10 +205,200 @@ module parser
             
     
         return
-    END function ppruebas
+    END function pExpression
             
     
-    recursive function pnum() result(res)
+    recursive function pExpressionTail() result(res)
+        character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s01
+    character(len=:), allocatable :: s02
+    integer :: s03
+     
+        type(operation) :: res
+        integer :: i
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 1 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                s00 = p_()
+                
+    
+                s01 = grupo0()
+                
+    
+                s02 = p_()
+                
+    
+                s03 = pTerm()
+                 
+    res = f1(s01,s03)
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function pExpressionTail
+            
+    
+    recursive function pTerm() result(res)
+        character(len=:), allocatable :: s00
+    type(operation) :: s01
+     
+        integer :: res
+        integer :: i
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 1 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                s00 = pFactor()
+                
+    
+            s01 = ""
+            do while (len(entrada) >= cursor)
+                s01 =s01//grupo1()
+            end do
+             
+    res = f3(s00,s01)
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function pTerm
+            
+    
+    recursive function pFactor() result(res)
+        character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s01
+    integer :: s02
+    character(len=:), allocatable :: s03
+    character(len=:), allocatable :: s04
+    integer :: s10
+     
+        character(len=:), allocatable :: res
+        integer :: i
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 2 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                InicioLexema = cursor
+                if (.not. aceptarLiterales("(","null")) then
+                    cycle
+                end if
+                s00 = ConsumirEntrada()
+                        
+    
+                s01 = p_()
+                
+    
+                s02 = pExpression()
+                
+    
+                s03 = p_()
+                
+    
+                InicioLexema = cursor
+                if (.not. aceptarLiterales(")","null")) then
+                    cycle
+                end if
+                s04 = ConsumirEntrada()
+                         
+    res = s02
+                                exit
+                            
+    
+                            case(1)
+                                cursor = GuardarPunto
+                                
+                s10 = pInteger()
+                 
+    res = s10
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function pFactor
+            
+    
+    recursive function pInteger() result(res)
+        character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s01
+     
+        integer :: res
+        integer :: i
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 1 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                s00 = p_()
+                
+    
+            InicioLexema = cursor
+            if (.not. (aceptarRango("0" ,"9","null"))) then
+                cycle
+            end if
+            do while (len(entrada) >= cursor)
+                if (.not. (aceptarRango("0" ,"9","null"))) then
+                    exit
+                end if
+            end do
+            s01 = ConsumirEntrada()
+                     
+    res = f4(s01)
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function pInteger
+            
+    
+    recursive function p_() result(res)
         character(len=:), allocatable :: s00
      
         character(len=:), allocatable :: res
@@ -384,12 +414,14 @@ module parser
                             case(0)
                                 cursor = GuardarPunto
                                 
-                InicioLexema = cursor
-                if (.not. (aceptarRango("0" ,"9","null"))) then
-                    cycle
+            InicioLexema = cursor
+            do while (len(entrada) >= cursor)
+                if (.not. (aceptarConjunto([char(32),char(9),char(10),char(13)],"null"))) then
+                    exit
                 end if
-                s00 = ConsumirEntrada()
-                         
+            end do
+            s00 = ConsumirEntrada()
+                     
     res = s00
                                 exit
                             
@@ -400,11 +432,225 @@ module parser
             
     
         return
-    END function pnum
+    END function p_
             
     ! Acciones
     
+    function f0(head, tail) result(res)
+        integer :: head
+    type(operation) :: tail
+        integer:: res
+    
+            integer :: i
+    
+            if (size(tail) < 0) then
+                res = head
+                return
+            end if
+    
+            do i = 1, size(tail)
+                if (tail(i)%operator == '+') then
+                    head = head + tail(i)%operand
+                else
+                    head = head - tail(i)%operand
+                end if
+            end do
+    
+            res = head
+        
+    end function f0
+            
+    
+    function f1(operator, operand) result(res)
+        character(len=:), allocatable :: operator
+    undefined :: operand
+        type(operation):: res
+    
+    
+            res = operation(operator, operand)
+        
+    end function f1
+            
+    
+    function f2(operator, operand) result(res)
+        character(len=:), allocatable :: operator
+    undefined :: operand
+        type(operation):: res
+    
+    
+            res = operation(operator, operand)
+        
+    end function f2
+            
+    
+    function f3(head, tail) result(res)
+        character(len=:), allocatable :: head
+    undefined :: tail
+        integer:: res
+    
+            integer :: i
+    
+            if (size(tail) < 0) then
+                res = head
+                return
+            end if
+    
+            do i = 1, size(tail)
+                if (tail(i)%operator == '*') then
+                    head = head * tail(i)%operand
+                else
+                    head = head / tail(i)%operand
+                end if
+            end do
+    
+            res = head
+        
+    end function f3
+            
+    
+    function f4(num) result(res)
+        character(len=:), allocatable :: num
+        integer:: res
+    
+    
+            read(num, *) res
+        
+    end function f4
+            
     ! grupos
     
+    function grupo0() result(res)
+        character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s10
+     
+        character(len=:), allocatable :: res
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 2 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                InicioLexema = cursor
+                if (.not. aceptarLiterales("+","null")) then
+                    cycle
+                end if
+                s00 = ConsumirEntrada()
+                         
+    res = s00
+                                exit
+                            
+    
+                            case(1)
+                                cursor = GuardarPunto
+                                
+                InicioLexema = cursor
+                if (.not. aceptarLiterales("-","null")) then
+                    cycle
+                end if
+                s10 = ConsumirEntrada()
+                         
+    res = s10
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function grupo0
+            
+    
+    function grupo2() result(res)
+        character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s10
+     
+        character(len=:), allocatable :: res
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 2 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                InicioLexema = cursor
+                if (.not. aceptarLiterales("*","null")) then
+                    cycle
+                end if
+                s00 = ConsumirEntrada()
+                         
+    res = s00
+                                exit
+                            
+    
+                            case(1)
+                                cursor = GuardarPunto
+                                
+                InicioLexema = cursor
+                if (.not. aceptarLiterales("/","null")) then
+                    cycle
+                end if
+                s10 = ConsumirEntrada()
+                         
+    res = s10
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function grupo2
+            
+    
+    function grupo1() result(res)
+        character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s01
+    character(len=:), allocatable :: s02
+     
+        type(operation) :: res
+        integer :: no_caso
+        logical :: temporal  ! para el ?
+     
+            GuardarPunto = cursor
+            
+            do no_caso = 0, 1 ! lista de concatenaciones
+                select case(no_caso)
+                    
+                            case(0)
+                                cursor = GuardarPunto
+                                
+                s00 = grupo2()
+                
+    
+                s01 = p_()
+                
+    
+                s02 = pFactor()
+                 
+    res = f2(s00,s02)
+                                exit
+                            
+                case default
+                    return
+                end select
+            end do
+            
+    
+        return
+    END function grupo1
+            
     end module parser
                     

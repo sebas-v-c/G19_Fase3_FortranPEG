@@ -230,13 +230,12 @@ export class finCadena extends Node {
         return visitor.visitfinCadena(this,caso,index);
     }
 }
-    
 
 export class Delimitador {
-    constructor(val1=null, ranged=null, val2=null, separator=null){
-        this.val1 = val1;
+    constructor(val1, ranged, val2, separator){
+        this.val1 = val1 === "" | !(val1) ? undefined : Number(val1);
         this.ranged = ranged;
-        this.val2 = val2;
+        this.val2 = val2 === "" | !(val2) ? undefined : Number(val2);
         this.separator = separator;
     }
 }
