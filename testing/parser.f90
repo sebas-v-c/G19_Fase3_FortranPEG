@@ -16,7 +16,7 @@ module parser
      
     function parse(cad) result(res)
         character(len=:), allocatable, intent(in) :: cad
-        character(len=:), allocatable :: res
+        integer :: res
         entrada = cad
         cursor = 1
             
@@ -171,10 +171,10 @@ module parser
     
     
     recursive function pExpression() result(res)
-        character(len=:), allocatable :: s00
-    character(len=:), allocatable :: s01
+        integer :: s00
+    type(operation) :: s01
      
-        character(len=:), allocatable :: res
+        integer :: res
         integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
@@ -190,11 +190,12 @@ module parser
                 s00 = pTerm()
                 
     
+            s01 = ""
             do while (len(entrada) >= cursor)
                 s01 =s01//pExpressionTail()
             end do
              
-    res = s00//s01
+    res = f0(s00,s01)
                                 exit
                             
                 case default
@@ -211,9 +212,9 @@ module parser
         character(len=:), allocatable :: s00
     character(len=:), allocatable :: s01
     character(len=:), allocatable :: s02
-    character(len=:), allocatable :: s03
+    integer :: s03
      
-        character(len=:), allocatable :: res
+        type(operation) :: res
         integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
@@ -237,7 +238,7 @@ module parser
     
                 s03 = pTerm()
                  
-    res = s00//s01//s02//s03
+    res = f1(s01,s03)
                                 exit
                             
                 case default
@@ -252,9 +253,9 @@ module parser
     
     recursive function pTerm() result(res)
         character(len=:), allocatable :: s00
-    character(len=:), allocatable :: s01
+    type(operation) :: s01
      
-        character(len=:), allocatable :: res
+        integer :: res
         integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
@@ -270,11 +271,12 @@ module parser
                 s00 = pFactor()
                 
     
+            s01 = ""
             do while (len(entrada) >= cursor)
                 s01 =s01//grupo1()
             end do
              
-    res = s00//s01
+    res = f3(s00,s01)
                                 exit
                             
                 case default
@@ -290,10 +292,10 @@ module parser
     recursive function pFactor() result(res)
         character(len=:), allocatable :: s00
     character(len=:), allocatable :: s01
-    character(len=:), allocatable :: s02
+    integer :: s02
     character(len=:), allocatable :: s03
     character(len=:), allocatable :: s04
-    character(len=:), allocatable :: s10
+    integer :: s10
      
         character(len=:), allocatable :: res
         integer :: i
@@ -356,7 +358,7 @@ module parser
         character(len=:), allocatable :: s00
     character(len=:), allocatable :: s01
      
-        character(len=:), allocatable :: res
+        integer :: res
         integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
@@ -383,7 +385,7 @@ module parser
             end do
             s01 = ConsumirEntrada()
                      
-    res = s00//s01
+    res = f4(s01)
                                 exit
                             
                 case default
@@ -434,6 +436,87 @@ module parser
             
     ! Acciones
     
+    function f0(head, tail) result(res)
+        integer :: head
+    type(operation) :: tail
+        integer:: res
+    
+            integer :: i
+    
+            if (size(tail) < 0) then
+                res = head
+                return
+            end if
+    
+            do i = 1, size(tail)
+                if (tail(i)%operator == '+') then
+                    head = head + tail(i)%operand
+                else
+                    head = head - tail(i)%operand
+                end if
+            end do
+    
+            res = head
+        
+    end function f0
+            
+    
+    function f1(operator, operand) result(res)
+        character(len=:), allocatable :: operator
+    undefined :: operand
+        type(operation):: res
+    
+    
+            res = operation(operator, operand)
+        
+    end function f1
+            
+    
+    function f2(operator, operand) result(res)
+        character(len=:), allocatable :: operator
+    undefined :: operand
+        type(operation):: res
+    
+    
+            res = operation(operator, operand)
+        
+    end function f2
+            
+    
+    function f3(head, tail) result(res)
+        character(len=:), allocatable :: head
+    undefined :: tail
+        integer:: res
+    
+            integer :: i
+    
+            if (size(tail) < 0) then
+                res = head
+                return
+            end if
+    
+            do i = 1, size(tail)
+                if (tail(i)%operator == '*') then
+                    head = head * tail(i)%operand
+                else
+                    head = head / tail(i)%operand
+                end if
+            end do
+    
+            res = head
+        
+    end function f3
+            
+    
+    function f4(num) result(res)
+        character(len=:), allocatable :: num
+        integer:: res
+    
+    
+            read(num, *) res
+        
+    end function f4
+            
     ! grupos
     
     function grupo0() result(res)
@@ -537,7 +620,7 @@ module parser
     character(len=:), allocatable :: s01
     character(len=:), allocatable :: s02
      
-        character(len=:), allocatable :: res
+        type(operation) :: res
         integer :: no_caso
         logical :: temporal  ! para el ?
      
@@ -557,7 +640,7 @@ module parser
     
                 s02 = pFactor()
                  
-    res = s00//s01//s02
+    res = f2(s00,s02)
                                 exit
                             
                 case default

@@ -204,6 +204,7 @@ function generarVariablesEtiquetas(caso,Parametros_Func){
     return Parametros_Func.map((Declarar, i) => {
         return `${Tipos_Variables[caso][i]} :: ${Declarar}`
     }) .join("\n")
+    
 }
 
 function CrearAcciones(Acciones){
@@ -283,6 +284,7 @@ function Retorno_Produccion_Kleene(expresion, caso, index,visitor){ // cerradura
                 `;
     }else if (expresion instanceof n.idRel || expresion instanceof n.grupo){
         return `
+        s${caso}${index} = ${expresion.accept(visitor)}
         do while (len(entrada) >= cursor)
             s${caso}${index} =s${caso}${index}//${expresion.accept(visitor)}
         end do
