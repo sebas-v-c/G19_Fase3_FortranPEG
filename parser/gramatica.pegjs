@@ -57,11 +57,11 @@ union
      
     let parsing = [expr, ...rest]
     
-    let plucks = parsing.filter((pexp) => pexp instanceof n.Pluck);
-    // not pluck
+    let plucks = parsing.filter((pexp) => pexp instanceof n.Pluck); // Todos los plucks
+
     let Parametros = plucks
   .filter((parsing_Expresions) => parsing_Expresions.Etiqueta.Etiqueta && parsing_Expresions.Etiqueta.Etiqueta !== null)
-  .map((parsing_Expresions) => { return parsing_Expresions.Etiqueta.Etiqueta });
+  .map((parsing_Expresions,index) => { return parsing_Expresions.Etiqueta.Etiqueta });
 
   if(accion !== null){  accion.parametros = Parametros}
   return new n.Union(parsing, accion);

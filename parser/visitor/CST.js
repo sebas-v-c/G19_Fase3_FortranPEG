@@ -176,8 +176,8 @@ export class rango extends Node {
 		this.isCase = isCase;
     }
 
-    accept(visitor) {
-        return visitor.visitrango(this);
+    accept(visitor,isCase= undefined) {
+        return visitor.visitrango(this,isCase);
     }
 }
     

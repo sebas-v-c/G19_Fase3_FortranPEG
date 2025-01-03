@@ -62,7 +62,7 @@ function parse(cad) result(res)
     entrada = cad
     cursor = 1
         
-    res = ${node.Reglas[0].id}() ! esperamos el retorno
+    res = p${node.Reglas[0].id}() ! esperamos el retorno
 end function parse
 ! funciones útiles
 ${funciones}
@@ -78,7 +78,7 @@ end module parser
     visitProducciones(node) { // Producciones será la encargada de retornar SIEMPRE algo
         //node.expr // lista de opciones
         let str = `
-recursive function ${node.id}() result(res)
+recursive function p${node.id}() result(res)
     ${generarVariablesLexemas(node.expr.exprs,this.producciones)} 
     ${node.expr.exprs[0].Predicado? node.expr.exprs[0].Predicado.Declarion_res+" ::" : "character(len=:), allocatable ::"} res
     integer :: i
@@ -89,7 +89,7 @@ recursive function ${node.id}() result(res)
         ${node.expr.accept(this)}
 
     return
-END function ${node.id}
+END function p${node.id}
         `
     return str;
     }
@@ -123,7 +123,9 @@ END function ${node.id}
     }
 
     visitPredicado(node,Parametros,caso){ // Este asigna el retorno por medio de accion semántica
+        // Parametros tiene todos los s
         let Parametros_Func = node.parametros.map((label) => {return `${label}`}).join(", ");
+        
         this.Contador_Acciones++;
         this.Acciones.push(
         `
@@ -136,7 +138,7 @@ end function f${this.Contador_Acciones}
         return `res = f${this.Contador_Acciones}(${Parametros})` 
     }
 
-    visitPluck(node,caso,index){ 
+    visitPluck(node,caso,index){
         this.plucks_Union.push(node.pluck);
         return node.Etiqueta.accept(this,caso,index);
     }
@@ -167,7 +169,7 @@ end function f${this.Contador_Acciones}
             end if
             verificador = ConsumirEntrada()
             if (len(verificador) > 0) then
-                s${caso}${index} = verificador
+                cursor = InicioLexema
             end if
                     `;
         }else if (node.asersion instanceof n.idRel || node.asersion instanceof n.grupo){
@@ -184,7 +186,7 @@ end function f${this.Contador_Acciones}
             end if
             verificador = ConsumirEntrada()
             if (len(verificador) < 0) then
-                s${caso}${index} = verificador
+                cursor = InicioLexema
             end if
                     `;
         }else if (node.asersion instanceof n.idRel || node.asersion instanceof n.grupo){
@@ -203,26 +205,25 @@ end function f${this.Contador_Acciones}
         // [abc0-9A-Z]
         let characterClass = [];
         const set = node.exprs
-            .filter((char) => char instanceof n.literalRango)
-            .map((char) => `'${char.val}'`);
+            .filter((char) => typeof char === "string")
+            .map((char) => node.isCase ? `tolower("${char}")` : `"${char}"`);
         const ranges = node.exprs
             .filter((char) => char instanceof n.rango)
-            .map((range) => range.accept(this)); 
+            .map((range) => range.accept(this, node.isCase)); 
 
         if (set.length !== 0){
-            characterClass = [`acceptSet([${set.join(',')}])`];
+            characterClass = [`aceptarConjunto([${set.join(',')}],"${node.isCase}")`];
         }
         if (ranges.length !== 0){
             characterClass = [...characterClass, ...ranges];
         }
 
-        return `(${characterClass.join(' .or. ')})`;
+        return `(${characterClass.join(' .or. &\n')})`;
     }
 
     //Solo devuelve las condiciones a cumplirse
-    visitrango(node) {
-        return `aceptarRango(${node.start} ,${node.end})`;
-
+    visitrango(node, isCase) {
+        return `aceptarRango("${node.start}" ,"${node.end}","${isCase}")`;
     }
 
     //Solo devuelve las condiciones a cumplirse
@@ -244,7 +245,7 @@ end function f${this.Contador_Acciones}
     }
 
     visitidRel(node) {
-        return `${node.val}()`;
+        return `p${node.val}()`;
     }
 
     visitgrupo(node) {

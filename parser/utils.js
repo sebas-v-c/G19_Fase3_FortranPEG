@@ -100,13 +100,21 @@ function aceptarLiterales(literales, isCase) result(aceptacion)
     return
 end function aceptarLiterales
 
-function aceptarRango(inicio, final) result(accept)
+function aceptarRango(inicio, final, isCase) result(accept)
     character(len=1) :: inicio, final
+    character(len=*) :: isCase
     logical :: accept
-
-    if(.not. (entrada(cursor:cursor) >= inicio .and. entrada(cursor:cursor) <= final)) then
-        accept = .false.
-        return
+    if (isCase == "i") then
+        if(.not. (tolower(entrada(cursor:cursor)) >= tolower(inicio) .and. &
+         tolower(entrada(cursor:cursor)) <= tolower(final))) then
+            accept = .false.
+            return
+        end if
+    else
+        if(.not. (entrada(cursor:cursor) >= inicio .and. entrada(cursor:cursor) <= final)) then
+            accept = .false.
+            return
+        end if
     end if
     !lexeme = consume(1)
     cursor = cursor +1
@@ -119,17 +127,26 @@ function ConsumirEntrada() result(Expresion)
 end function ConsumirEntrada
 
 
-function aceptarConjunto(set) result(accept)
+function aceptarConjunto(set, isCase) result(accept)
     character(len=1), dimension(:) :: set
+    character(len=*) :: isCase
     logical :: accept
 
-    if(.not. (findloc(set, input(cursor:cursor), 1) > 0)) then
-        accept = .false.
-        return
+    if (isCase == "i") then
+        if(.not. (findloc(set, tolower(entrada(cursor:cursor)), 1) > 0)) then
+            accept = .false.
+            return
+        end if
+    else 
+        if(.not. (findloc(set, entrada(cursor:cursor), 1) > 0)) then
+            accept = .false.
+            return
+        end if
     end if
+    
     cursor = cursor + 1
     accept = .true.
-end function acceptSet
+end function aceptarConjunto
 
 `
 
@@ -183,7 +200,7 @@ function generarVariablesLexemas(Lista_Uniones, Producciones_Retornos){
 function generarVariablesEtiquetas(caso,Parametros_Func){
     return Parametros_Func.map((Declarar, i) => {
         return `${Tipos_Variables[caso][i]} :: ${Declarar}`
-    }) 
+    }) .join("\n")
 }
 
 
