@@ -306,76 +306,72 @@ function Retorno_Produccion_Condicional(expresion, caso, index,visitor){ // cerr
 
 
 function Delimitadores(expresion, qty, caso, index, visitor) {
-    if (qty instanceof Delimitador) {
-        const { val1, ranged, val2, separator } = qty;
-        let lowerBound = val1 !== null ? val1 : 0; // Default to 0 if not specified
-        let upperBound = ranged && val2 !== null ? val2 : null; // Null means no upper limit
-        let fortranCode = '';
+    console.log(qty)
+    const { val1, ranged, val2, separator } = qty;
+    let lowerBound = val1 !== null ? val1 : 0; // Default to 0 if not specified
+    let upperBound = ranged && val2 !== null ? val2 : null; // Null means no upper limit
+    let fortranCode = '';
 
-        // Function to add separator logic using aceptarLiterales
-        const addSeparatorLogic = (isFinalIterationCheck = false) => {
-            if (separator) {
-                return `
-                if (${isFinalIterationCheck ? '.false.' : '.true.'}) then
-                    if (.not. (aceptarLiterales("${separator}"))) then
-                        exit
-                    end if
-                end if
-                `;
-            }
-            return '';
-        };
-
-        // Handle lower bound
-        if (lowerBound > 0) {
-            fortranCode += `
-            ! Lower bound: ${lowerBound} repetitions
-            do i = 1, ${lowerBound}
-                if (.not. (${expresion.accept(visitor)})) then
+    // Function to add separator logic using aceptarLiterales
+    const addSeparatorLogic = (isFinalIterationCheck = false) => {
+        if (separator) {
+            return `
+            if (${isFinalIterationCheck ? '.false.' : '.true.'}) then
+                if (.not. (aceptarLiterales("${separator}"))) then
                     exit
                 end if
-                ${addSeparatorLogic('i == ' + lowerBound)}  ! Add separator check if not last iteration
-            end do
+            end if
             `;
         }
+        return '';
+    };
 
-        // Handle upper bound
-        if (upperBound !== null) {
-            fortranCode += `
-            ! Upper bound: ${upperBound} repetitions
-            do i = ${lowerBound + 1}, ${upperBound}
-                if (.not. (${expresion.accept(visitor)})) then
-                    exit
-                end if
-                ${addSeparatorLogic('i == ' + upperBound)}  ! Add separator check if not last iteration
-            end do
-            `;
-        } else if (ranged) {
-            // Handle |n..| case (no upper limit)
-            fortranCode += `
-            ! No upper limit
-            do while (len(entrada) >= cursor)
-                if (.not. (${expresion.accept(visitor)})) then
-                    exit
-                end if
-                ${addSeparatorLogic()}  ! Add separator check for infinite loop
-            end do
-            `;
-        }
-
-        return `
-        \t\t! Initialize lexeme tracking
-        \t\tInicioLexema = cursor
-        
-        ${fortranCode}
-
-        \t\t! Consume remaining input
-        \t\ts${caso}${index} = ConsumirEntrada()
+    // Handle lower bound
+    if (lowerBound > 0) {
+        fortranCode += `
+        ! Lower bound: ${lowerBound} repetitions
+        do i = 1, ${lowerBound}
+            if (.not. (${expresion.accept(visitor)})) then
+                exit
+            end if
+            ${addSeparatorLogic('i == ' + lowerBound)}  ! Add separator check if not last iteration
+        end do
         `;
     }
 
-    // Return an empty string for invalid or unsupported cases
-    return '';
+    // Handle upper bound
+    if (upperBound !== null) {
+        fortranCode += `
+        ! Upper bound: ${upperBound} repetitions
+        do i = ${lowerBound + 1}, ${upperBound}
+            if (.not. (${expresion.accept(visitor)})) then
+                exit
+            end if
+            ${addSeparatorLogic('i == ' + upperBound)}  ! Add separator check if not last iteration
+        end do
+        `;
+    } else if (ranged) {
+        // Handle |n..| case (no upper limit)
+        fortranCode += `
+        ! No upper limit
+        do while (len(entrada) >= cursor)
+            if (.not. (${expresion.accept(visitor)})) then
+                exit
+            end if
+            ${addSeparatorLogic()}  ! Add separator check for infinite loop
+        end do
+        `;
+    }
+
+    return `
+    \t\t! Initialize lexeme tracking
+    \t\tInicioLexema = cursor
+    
+    ${fortranCode}
+
+    \t\t! Consume remaining input
+    \t\ts${caso}${index} = ConsumirEntrada()
+    `;
 }
 
 
@@ -383,7 +379,6 @@ function Delimitadores(expresion, qty, caso, index, visitor) {
 
 // InicioLexema = cursor ciclos s${caso}${index} = ConsumirEntrada()
 function Retorno_Produccion_Default(expresion, caso, index, visitor,qty){ // cerradura sin contador
-    
     if (qty instanceof n.Delimitador){
         // delimitador
         let delimitador = Delimitadores(expresion, qty, caso, index,visitor);
