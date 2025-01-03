@@ -183,20 +183,37 @@ function Casteo(Tipo_de_la_Variable){ // Todo a retornará a string
     
 }
 
-function Elegir_Retorno_res(Lista_Concatenaciones, numero_Caso){
+function Elegir_Retorno_res(Lista_Concatenaciones, numero_Caso, plucks_Union){
 
     let retorno = "res = "
-    let i = 0
-    Lista_Concatenaciones.forEach(parsing_expresion => {
-        //console.log("->"+expresion.label+"<-")
-        retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`;
-        i++;
-    });
-    
-   
-    retorno = retorno.slice(0, -2);
+    let i = 0;
+    console.log(plucks_Union)
+    if (plucks_Union.every(value => value === false)) {
+       
+        Lista_Concatenaciones.forEach(parsing_expresion => {
+            //console.log("->"+expresion.label+"<-")
+            retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`;
+            i++;
+        });
+        
+        retorno = retorno.slice(0, -2);
+        return retorno;
+    } else {
+        Lista_Concatenaciones.forEach(parsing_expresion => {
+            if (plucks_Union[i]){
+                retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`;  
+            }
+            i++;
+        });
+        retorno = retorno.slice(0, -2);
+        return retorno;
+    }
 
-    return retorno;
+
+    
+
+
+    
 }
 
 // Retornos de producciones a una variable específica
@@ -261,18 +278,12 @@ function Retorno_Produccion_Condicional(expresion, caso, index,visitor){ // cerr
 
 function Delimitadores(expresion, qty, caso, index,visitor){
 
-    console.log(expresion)
-    console.log(qty)
-    console.log(caso)
-    console.log(index)
-    console.log(visitor)
-  
+
     if (qty.startsWith('|') && qty.endsWith('|')) {
         qty = qty.replace(/\s/g, '');
         // Extract range bounds from |n..m|, |n..|, or |..m|
         const rangeMatch = /\|(\d*)\.\.(\d*)\|/.exec(qty);
         if (rangeMatch) {
-            console.log("ayyEver que rico");
             const lowerBound = rangeMatch[1] ? parseInt(rangeMatch[1], 10) : 0; // Default to 0 if not specified
             const upperBound = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : null; // Null means no upper limit
             let fortranCode = '';

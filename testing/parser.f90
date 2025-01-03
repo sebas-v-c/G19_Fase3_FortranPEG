@@ -10,11 +10,11 @@ module parser
      
     function parse(cad) result(res)
         character(len=:), allocatable, intent(in) :: cad
-        integer :: res
+        character(len=:), allocatable :: res
         entrada = cad
         cursor = 1
             
-        res = salud() ! esperamos el retorno
+        res = hola() ! esperamos el retorno
     end function parse
     ! funciones útiles
     
@@ -133,10 +133,11 @@ module parser
     
     
     
-    recursive function salud() result(res)
+    recursive function hola() result(res)
         character(len=:), allocatable :: s00
+    character(len=:), allocatable :: s01
      
-        integer :: res
+        character(len=:), allocatable :: res
         integer :: i
         integer :: no_caso
         logical :: temporal  ! para el ?
@@ -150,12 +151,19 @@ module parser
                                 cursor = GuardarPunto
                                 
                 InicioLexema = cursor
-                if (.not. aceptarLiterales("norberto","null")) then
+                if (.not. aceptarLiterales("ever","null")) then
                     cycle
                 end if
                 s00 = ConsumirEntrada()
+                        
+    
+                InicioLexema = cursor
+                if (.not. aceptarLiterales("yes","null")) then
+                    cycle
+                end if
+                s01 = ConsumirEntrada()
                          
-                res = f0(s00)
+    undefined
                                 exit
                             
                 case default
@@ -165,17 +173,10 @@ module parser
             
     
         return
-    END function salud
+    END function hola
             
     ! Acciones
     
-    function f0(e) result(res)
-        character(len=:), allocatable :: e
-        integer:: res
-    
-    
-    end function f0
-            
     ! grupos
     
     end module parser

@@ -309,12 +309,11 @@ function peg$parse(input, options) {
   var peg$f6 = function(expr, rest, accion) {
 
     let parsing = [expr, ...rest]
-    console.log(parsing[0].Etiqueta.Etiqueta);
+    //console.log(parsing[0].Etiqueta.Etiqueta);
     let Parametros = parsing
   .filter((parsing_Expresions) => parsing_Expresions.Etiqueta.Etiqueta && parsing_Expresions.Etiqueta.Etiqueta !== null)
   .map((parsing_Expresions) => { return parsing_Expresions.Etiqueta.Etiqueta });
 
-  console.log(Parametros);
   if(accion !== null){  accion.parametros = Parametros}
     return new n.Union(parsing, accion);
   };

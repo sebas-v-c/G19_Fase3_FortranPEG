@@ -32,6 +32,9 @@ export default class Tokenizer extends Visitor {
         // Acciones semánticas
         this.Contador_Acciones = -1
         this.Acciones = []   // codigo de los grupos
+
+        // Lista de plucks activos por union
+        this.plucks_Union = []
     }
 
     Generar_Codigo(grammar) {
@@ -113,8 +116,9 @@ END function ${node.id}
     }
     
     visitUnion(node,caso) {
+        this.plucks_Union = []
         let Parametros = node.exprs.map((expresiones,index) => {return `s${caso}${index}`}).join(", ");
-        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this,Parametros,caso): Elegir_Retorno_res(node.exprs,caso)}`  // expr.accept(this) sería la escritura de las expresiones
+        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this,Parametros,caso): Elegir_Retorno_res(node.exprs,caso, this.plucks_Union)}`  // expr.accept(this) sería la escritura de las expresiones
     }
 
     visitPredicado(node,Parametros,caso){ // Este asigna el retorno por medio de accion semántica
@@ -132,6 +136,7 @@ end function f${this.Contador_Acciones}
     }
 
     visitPluck(node,caso,index){ 
+        this.plucks_Union.push(node.pluck);
         return node.Etiqueta.accept(this,caso,index);
     }
 

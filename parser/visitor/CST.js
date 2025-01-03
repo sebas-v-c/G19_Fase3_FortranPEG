@@ -75,7 +75,7 @@ export class Pluck extends Node{
 		this.pluck = pluck;
     }
 
-    accept(visitor,caso = undefined,index= undefined) {
+    accept(visitor,caso = undefined,index= undefined) { // estos parámetros tienen que llevarlos las parsing expressions
         return visitor.visitPluck(this,caso,index);
     }
 }

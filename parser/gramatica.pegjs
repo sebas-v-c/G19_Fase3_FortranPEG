@@ -56,12 +56,11 @@ union
   = expr:parsing_Expression rest:(_ @parsing_Expression !(_ literales? _ "=") )* accion:(_ @predicado)? {
 
     let parsing = [expr, ...rest]
-    console.log(parsing[0].Etiqueta.Etiqueta);
+    //console.log(parsing[0].Etiqueta.Etiqueta);
     let Parametros = parsing
   .filter((parsing_Expresions) => parsing_Expresions.Etiqueta.Etiqueta && parsing_Expresions.Etiqueta.Etiqueta !== null)
   .map((parsing_Expresions) => { return parsing_Expresions.Etiqueta.Etiqueta });
 
-  console.log(Parametros);
   if(accion !== null){  accion.parametros = Parametros}
     return new n.Union(parsing, accion);
   }
