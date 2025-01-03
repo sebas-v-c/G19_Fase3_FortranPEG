@@ -2,7 +2,7 @@
 module parser
     implicit none
     integer, private :: cursor, InicioLexema, GuardarPunto
-    character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
+    character(len=:), allocatable, private :: entrada, esperado, verificador ! entrada es la entrada a consumir
     ! variables globales
      
     contains
@@ -14,7 +14,7 @@ module parser
         entrada = cad
         cursor = 1
             
-        res = hola() ! esperamos el retorno
+        res = jo() ! esperamos el retorno
     end function parse
     ! funciones útiles
     
@@ -133,7 +133,7 @@ module parser
     
     
     
-    recursive function hola() result(res)
+    recursive function jo() result(res)
         character(len=:), allocatable :: s00
     character(len=:), allocatable :: s01
      
@@ -151,19 +151,23 @@ module parser
                                 cursor = GuardarPunto
                                 
                 InicioLexema = cursor
-                if (.not. aceptarLiterales("ever","null")) then
+                if (.not. aceptarLiterales("hola","null")) then
                     cycle
                 end if
-                s00 = ConsumirEntrada()
+                verificador = ConsumirEntrada()
+                if (len(verificador) < 0) then
+                    s00 = verificador
+                end if
+                    
                         
     
                 InicioLexema = cursor
-                if (.not. aceptarLiterales("yes","null")) then
+                if (.not. aceptarLiterales("hola mundo","null")) then
                     cycle
                 end if
                 s01 = ConsumirEntrada()
                          
-    undefined
+    res = s00//s01
                                 exit
                             
                 case default
@@ -173,7 +177,7 @@ module parser
             
     
         return
-    END function hola
+    END function jo
             
     ! Acciones
     

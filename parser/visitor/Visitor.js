@@ -8,6 +8,8 @@ export default class Visitor {
 	visitPluck(node) {}
 	visitEtiqueta(node){}
 	visitAnotado(node){}
+	visitAsersion(node){}
+	visitNegAsersion(node){}
 	visitString(node) {}
 	visitAny(node) {}
 	visitCorchetes(node) {}

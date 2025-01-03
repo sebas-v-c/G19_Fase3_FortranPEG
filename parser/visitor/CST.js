@@ -104,6 +104,27 @@ export class Anotado extends Node{
     }
 }
 
+export class Asersion extends Node{ // &
+    constructor(asersion) {
+        super();
+        this.asersion = asersion; // expresión ó predicado
+    }
+    accept(visitor,caso = undefined,index= undefined) {
+        return visitor.visitAsersion(this,caso,index);
+    }
+}
+
+export class NegAsersion extends Node{ // !
+
+    constructor(asersion) {
+        super();
+        this.asersion = asersion; // expresión ó predicado
+    }
+    accept(visitor,caso = undefined,index= undefined) {
+        return visitor.visitNegAsersion(this,caso,index);
+    }
+}
+
 // ---- Tipos de expresiones ----
     
 export class String extends Node {

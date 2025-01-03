@@ -6,7 +6,7 @@
 }}
 
 gramatica
-  =codigo:CodigoGlobal? _ prods:producciones+ _ {
+  =_ codigo:CodigoGlobal? _ prods:producciones+ _ {
     let duplicados = ids.filter((item, index) => ids.indexOf(item) !== index);
     if (duplicados.length > 0) {
         errores.push(new ErrorReglas("Regla duplicada: " + duplicados[0]));
@@ -54,21 +54,24 @@ opciones
 
 union
   = expr:parsing_Expression rest:(_ @parsing_Expression !(_ literales? _ "=") )* accion:(_ @predicado)? {
-
+     
     let parsing = [expr, ...rest]
-    //console.log(parsing[0].Etiqueta.Etiqueta);
-    let Parametros = parsing
+    
+    let plucks = parsing.filter((pexp) => pexp instanceof n.Pluck);
+    // not pluck
+    let Parametros = plucks
   .filter((parsing_Expresions) => parsing_Expresions.Etiqueta.Etiqueta && parsing_Expresions.Etiqueta.Etiqueta !== null)
   .map((parsing_Expresions) => { return parsing_Expresions.Etiqueta.Etiqueta });
 
   if(accion !== null){  accion.parametros = Parametros}
-    return new n.Union(parsing, accion);
+  return new n.Union(parsing, accion);
+
   }
 
 parsing_Expression = @Pluck 
-                  /  "!" (expresiones/ predicado) 
-                  /  "&" (expresiones/ predicado) 
-                  / ".!" { return new n.finCadena() }
+                  /  "!" assersion:(expresiones/ predicado) { return new n.NegAsersion(assersion); }
+                  /  "&" assersion:(expresiones/ predicado) { return new n.Asersion(assersion); }
+                  / ".!"                                    { return new n.finCadena(); }
 
 Pluck = pluck:"@"? _ expr:etiqueta {
   return new n.Pluck(expr, pluck ? true : false);

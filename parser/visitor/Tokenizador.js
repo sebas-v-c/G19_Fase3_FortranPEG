@@ -42,6 +42,7 @@ export default class Tokenizer extends Visitor {
     }
 
     visitGramatica(node){
+        
         node.Reglas.forEach(Produccion => { // Guardamos nombre de produccion como clave, y el retorno de la produccion
             this.producciones.set(Produccion.id,Produccion.expr.exprs[0].Predicado? Produccion.expr.exprs[0].Predicado.Declarion_res: "character(len=:), allocatable");
         });
@@ -49,7 +50,7 @@ export default class Tokenizer extends Visitor {
 module parser
 implicit none
 integer, private :: cursor, InicioLexema, GuardarPunto
-character(len=:), allocatable, private :: entrada, esperado ! entrada es la entrada a consumir
+character(len=:), allocatable, private :: entrada, esperado, verificador ! entrada es la entrada a consumir
 ! variables globales
 ${node.CodigoGlobal ? node.CodigoGlobal[0] : ""} 
 contains
@@ -153,9 +154,43 @@ end function f${this.Contador_Acciones}
         }
     }
 
-    visitAnotado(node){
+    visitAnotado(node){ // aqui seria el $
+    }
+    // s = &"hoa" "hoaf"  hoaf
+    visitAsersion(node,caso,index){ // &
+        if (node.asersion instanceof n.String || node.asersion instanceof n.Corchetes || node.asersion instanceof n.Any){    
+            
+            return `
+            InicioLexema = cursor
+            if (.not. ${node.asersion.accept(this)}) then
+                cycle
+            end if
+            verificador = ConsumirEntrada()
+            if (len(verificador) > 0) then
+                s${caso}${index} = verificador
+            end if
+                    `;
+        }else if (node.asersion instanceof n.idRel || node.asersion instanceof n.grupo){
+            return `s${caso}${index} = ${node.asersion.accept(this)}`
+        }
     }
 
+    visitNegAsersion(node,caso,index){
+        if (node.asersion instanceof n.String || node.asersion instanceof n.Corchetes || node.asersion instanceof n.Any){    
+            return `
+            InicioLexema = cursor
+            if (.not. ${node.asersion.accept(this)}) then
+                cycle
+            end if
+            verificador = ConsumirEntrada()
+            if (len(verificador) < 0) then
+                s${caso}${index} = verificador
+            end if
+                    `;
+        }else if (node.asersion instanceof n.idRel || node.asersion instanceof n.grupo){
+            return `s${caso}${index} = ${node.asersion.accept(this)}`
+        }
+    }
     visitString(node) {
         return `aceptarLiterales("${node.val}","${node.isCase}")`; 
     }

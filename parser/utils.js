@@ -134,7 +134,10 @@ function EleccionTipo(parsing_expresion, Producciones_Retornos) {
     let expresion;
     if (parsing_expresion instanceof n.Pluck){
         expresion = parsing_expresion.Etiqueta.Anotado.expr;
+    }else if (parsing_expresion instanceof n.Asersion || parsing_expresion instanceof n.NegAsersion){
+        expresion = parsing_expresion.asersion;
     }
+
     if (expresion instanceof n.String || expresion instanceof n.Corchetes) {
         return "character(len=:), allocatable";
     }else if(expresion instanceof n.idRel){
@@ -187,7 +190,6 @@ function Elegir_Retorno_res(Lista_Concatenaciones, numero_Caso, plucks_Union){
 
     let retorno = "res = "
     let i = 0;
-    console.log(plucks_Union)
     if (plucks_Union.every(value => value === false)) {
        
         Lista_Concatenaciones.forEach(parsing_expresion => {
@@ -207,13 +209,7 @@ function Elegir_Retorno_res(Lista_Concatenaciones, numero_Caso, plucks_Union){
         });
         retorno = retorno.slice(0, -2);
         return retorno;
-    }
-
-
-    
-
-
-    
+    } 
 }
 
 // Retornos de producciones a una variable específica
@@ -351,6 +347,7 @@ function Retorno_Produccion_Default(expresion, caso, index, visitor,qty){ // cer
         }
     }   
 }
+
 
 
 export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default, Delimitadores, generarVariablesEtiquetas}
