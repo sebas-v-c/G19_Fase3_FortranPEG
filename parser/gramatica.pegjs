@@ -68,7 +68,7 @@ union
 parsing_Expression = @Pluck 
                   /  "!" (expresiones/ predicado) 
                   /  "&" (expresiones/ predicado) 
-                  / ".!"
+                  / ".!" { return new n.finCadena() }
 
 Pluck = pluck:"@"? _ expr:etiqueta {
   return new n.Pluck(expr, pluck ? true : false);

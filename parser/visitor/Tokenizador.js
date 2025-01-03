@@ -116,7 +116,7 @@ END function ${node.id}
     }
     
     visitUnion(node,caso) {
-        this.plucks_Union = []
+        this.plucks_Union = [];
         let Parametros = node.exprs.map((expresiones,index) => {return `s${caso}${index}`}).join(", ");
         return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this,Parametros,caso): Elegir_Retorno_res(node.exprs,caso, this.plucks_Union)}`  // expr.accept(this) sería la escritura de las expresiones
     }
@@ -151,6 +151,9 @@ end function f${this.Contador_Acciones}
             default:
                 return Retorno_Produccion_Default(node.Anotado.expr,caso,index,this, node.Anotado.qty);
         }
+    }
+
+    visitAnotado(node){
     }
 
     visitString(node) {
@@ -216,7 +219,7 @@ END function grupo${this.contador_grupos}
         return `grupo${this.contador_grupos}()`;
     }
 
-    visitfinCadena(node) {
+    visitfinCadena(node,caso,index) {
         return 'aceptacionEOF()';
     }
 

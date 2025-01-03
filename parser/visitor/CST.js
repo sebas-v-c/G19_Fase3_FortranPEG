@@ -205,8 +205,8 @@ export class finCadena extends Node {
         
     }
 
-    accept(visitor) {
-        return visitor.visitfinCadena(this);
+    accept(visitor,caso = undefined,index= undefined) {
+        return visitor.visitfinCadena(this,caso,index);
     }
 }
     
