@@ -171,7 +171,7 @@ function EleccionTipo(parsing_expresion, Producciones_Retornos) {
         expresion = parsing_expresion;
     }
         
-    if (expresion instanceof n.String || expresion instanceof n.Corchetes) {
+    if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any) {
         return "character(len=:), allocatable";
     }else if(expresion instanceof n.idRel){
         return Producciones_Retornos.get(expresion.val);
