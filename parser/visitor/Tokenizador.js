@@ -118,14 +118,28 @@ END function p${node.id}
     
     visitUnion(node,caso) {
         this.plucks_Union = [];
-        let Parametros = node.exprs.map((expresiones,index) => {return `s${caso}${index}`}).join(", ");
-        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this,Parametros,caso): Elegir_Retorno_res(node.exprs,caso, this.plucks_Union)}`  // expr.accept(this) sería la escritura de las expresiones
+        
+        return `${node.exprs.map((expr,index) => expr.accept(this,caso,index)).join('\n')} \n${node.Predicado? node.Predicado.accept(this,caso): Elegir_Retorno_res(node.exprs,caso, this.plucks_Union)}`  // expr.accept(this) sería la escritura de las expresiones
     }
 
-    visitPredicado(node,Parametros,caso){ // Este asigna el retorno por medio de accion semántica
+    visitPredicado(node,caso){ // Este asigna el retorno por medio de accion semántica
         // Parametros tiene todos los s
-        let Parametros_Func = node.parametros.map((label) => {return `${label}`}).join(", ");
         
+        let Parametros_In = "";
+        
+        for (let i = 0; i < node.parametros.length; i++) {
+            //console.log(node.parametros[i])
+            if(node.parametros[i] != null){
+                Parametros_In += `s${caso}${i},`
+            }
+        }
+        Parametros_In = Parametros_In.slice(0, -1); 
+
+        node.parametros =node.parametros.filter(Etiqueta => Etiqueta !== null)
+
+        let Parametros_Func = node.parametros
+        .map((label) => {return `${label}`}).join(", ");
+
         this.Contador_Acciones++;
         this.Acciones.push(
         `
@@ -135,7 +149,7 @@ function f${this.Contador_Acciones}(${Parametros_Func}) result(res)
 end function f${this.Contador_Acciones}
         `    
         ); // Guardamos el código
-        return `res = f${this.Contador_Acciones}(${Parametros})` 
+        return `res = f${this.Contador_Acciones}(${Parametros_In})` 
     }
 
     visitPluck(node,caso,index){
@@ -253,6 +267,8 @@ end function f${this.Contador_Acciones}
 
         this.contador_grupos++;
 
+        let grupoAct = this.contador_grupos;
+
         this.grupos.push( // Guardamos la funcion
             `
 function grupo${this.contador_grupos}() result(res)
@@ -265,10 +281,10 @@ function grupo${this.contador_grupos}() result(res)
         ${node.expr.accept(this)}
 
     return
-END function grupo${this.contador_grupos}
+END function grupo${grupoAct}
         `        
         ); // Guardamos opciones
-        return `grupo${this.contador_grupos}()`;
+        return `grupo${grupoAct}()`;
     }
 
     visitfinCadena(node,caso,index) {

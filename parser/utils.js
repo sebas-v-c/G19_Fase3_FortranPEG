@@ -203,7 +203,6 @@ function generarVariablesEtiquetas(caso,Parametros_Func){
     }) .join("\n")
 }
 
-
 function CrearAcciones(Acciones){
     let codigo = Acciones.map((codigo, i) => {
         return codigo

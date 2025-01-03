@@ -62,8 +62,8 @@ export class Predicado extends Node{
 		this.parametros = parametros;
     }
 
-    accept(visitor,Params = undefined, caso = undefined) {
-        return visitor.visitPredicado(this, Params, caso);
+    accept(visitor, caso = undefined) {
+        return visitor.visitPredicado(this, caso);
     }
 }
 

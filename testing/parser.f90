@@ -221,7 +221,7 @@ module parser
                 end if
                 s08 = ConsumirEntrada()
                          
-    res = f0( s06, s07, s08)
+    res = f0(s02,s04,s06)
                                 exit
                             
                 case default
