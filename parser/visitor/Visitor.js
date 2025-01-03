@@ -5,7 +5,9 @@ export default class Visitor {
 	visitOpciones(node) {}
 	visitUnion(node,caso) {}
 	visitPredicado(node){}
-	visitExpresion(node) {}
+	visitPluck(node) {}
+	visitEtiqueta(node){}
+	visitAnotado(node){}
 	visitString(node) {}
 	visitAny(node) {}
 	visitCorchetes(node) {}

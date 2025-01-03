@@ -131,17 +131,20 @@ end function f${this.Contador_Acciones}
         return `res = f${this.Contador_Acciones}(${Parametros})` 
     }
 
-    visitExpresion(node,caso,index) { // caso signifca el numero de caso que esta en el or e index es el numero de la expresion
+    visitPluck(node,caso,index){ 
+        return node.Etiqueta.accept(this,caso,index);
+    }
 
-        switch (node.qty) {   // cerraduras y contadores +, *, ?, conteo
+    visitEtiqueta(node,caso,index) { // caso signifca el numero de caso que esta en el or e index es el numero de la expresion
+        switch (node.Anotado.qty) {   // cerraduras y contadores +, *, ?, conteo
             case '+':
-                return Retorno_Produccion_Mas(node.expr,caso,index,this);
+                return Retorno_Produccion_Mas(node.Anotado.expr,caso,index,this);
             case '*':
-                return Retorno_Produccion_Kleene(node.expr,caso,index,this);
+                return Retorno_Produccion_Kleene(node.Anotado.expr,caso,index,this);
             case '?':
-                return Retorno_Produccion_Condicional(node.expr,caso,index,this);
+                return Retorno_Produccion_Condicional(node.Anotado.expr,caso,index,this);
             default:
-                return Retorno_Produccion_Default(node.expr,caso,index,this, node.qty);
+                return Retorno_Produccion_Default(node.Anotado.expr,caso,index,this, node.Anotado.qty);
         }
     }
 

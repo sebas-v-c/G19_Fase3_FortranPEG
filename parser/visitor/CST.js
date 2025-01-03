@@ -44,7 +44,7 @@ export class Union extends Node {
 
     constructor(exprs,Predicado) {
         super();
-        this.exprs = exprs; // lista de expresiones
+        this.exprs = exprs; // lista de parsing_expresiones
         this.Predicado = Predicado;
     }
 
@@ -53,9 +53,10 @@ export class Union extends Node {
     }
 }
 
-export class Predicado {
+export class Predicado extends Node{
 
     constructor(Declarion_res, codigo, parametros) {
+        super();
         this.Declarion_res = Declarion_res;
 		this.codigo = codigo;
 		this.parametros = parametros;
@@ -65,21 +66,45 @@ export class Predicado {
         return visitor.visitPredicado(this, Params, caso);
     }
 }
-    
-export class Expresion extends Node {
 
-    constructor(expr, label, qty) {
+// ---- Tipos de expresiones ----
+export class Pluck extends Node{
+    constructor(Etiqueta, pluck) {
         super();
-        this.expr = expr;
-		this.label = label; // asersiones, coincidencia, pluck, etiquetas
-		this.qty = qty;
-
+        this.Etiqueta = Etiqueta; // aqui tiene el objeto etiqueta
+		this.pluck = pluck;
     }
 
-    accept(visitor, caso=undefined, Corr_Expr=undefined) {
-        return visitor.visitExpresion(this,caso,Corr_Expr);
+    accept(visitor,caso = undefined,index= undefined) {
+        return visitor.visitPluck(this,caso,index);
     }
 }
+
+export class Etiqueta extends Node{
+    constructor(Anotado, Etiqueta) {
+        super();
+        this.Anotado = Anotado; // aqui tiene el objeto Anotado
+		this.Etiqueta = Etiqueta;
+    }
+
+    accept(visitor,caso = undefined,index= undefined) {
+        return visitor.visitEtiqueta(this,caso,index);
+    }
+}
+
+export class Anotado extends Node{
+    constructor(expr, qty, text) {
+        super();
+        this.expr = expr; // Esta guarda las expresiones
+		this.qty = qty;
+		this.text = text;
+    }
+    accept(visitor) {
+        return visitor.visitAnotado(this);
+    }
+}
+
+// ---- Tipos de expresiones ----
     
 export class String extends Node {
 

@@ -130,29 +130,32 @@ function Generar_Variable_Res(){
 }
 
 // generacion de variables concatenadas ej: s0,s1,s2,s3 => concatenarlas como return
-function EleccionTipo(expresion, Producciones_Retornos) {
-
-    if (expresion.expr instanceof n.String || expresion.expr instanceof n.Corchetes) {
+function EleccionTipo(parsing_expresion, Producciones_Retornos) {
+    let expresion;
+    if (parsing_expresion instanceof n.Pluck){
+        expresion = parsing_expresion.Etiqueta.Anotado.expr;
+    }
+    if (expresion instanceof n.String || expresion instanceof n.Corchetes) {
         return "character(len=:), allocatable";
-    }else if(expresion.expr instanceof n.idRel){
-        return Producciones_Retornos.get(expresion.expr.val);
-    } else if(expresion.expr instanceof n.grupo ) {
-        return expresion.expr.expr.exprs[0].Predicado? expresion.expr.expr.exprs[0].Predicado.Declarion_res : "character(len=:), allocatable"
+    }else if(expresion instanceof n.idRel){
+        return Producciones_Retornos.get(expresion.val);
+    } else if(expresion instanceof n.grupo ) {
+        return expresion.expr.exprs[0].Predicado? expresion.expr.exprs[0].Predicado.Declarion_res : "character(len=:), allocatable"
     }else {
         return "Error";
     }
 }
 
 let Tipos_Variables = []
-function generarVariablesLexemas(Lista_Opciones, Producciones_Retornos){
+function generarVariablesLexemas(Lista_Uniones, Producciones_Retornos){
     let variables = "";
     Tipos_Variables = []
-    Lista_Opciones.forEach((Opcion,i) => {
+    Lista_Uniones.forEach((Union,i) => {
         let Tipos_Expresiones = [];
-        Opcion.exprs.forEach((expresion,j) => {
-            Tipos_Expresiones.push(EleccionTipo(expresion, Producciones_Retornos));
+        Union.exprs.forEach((parsing_expresion,j) => {
+            Tipos_Expresiones.push(EleccionTipo(parsing_expresion, Producciones_Retornos));
             
-            variables +=`${EleccionTipo(expresion,Producciones_Retornos)} :: s${i}${j}\n`
+            variables +=`${EleccionTipo(parsing_expresion,Producciones_Retornos)} :: s${i}${j}\n`
        }); 
        Tipos_Variables.push(Tipos_Expresiones);
     });
@@ -184,12 +187,13 @@ function Elegir_Retorno_res(Lista_Concatenaciones, numero_Caso){
 
     let retorno = "res = "
     let i = 0
-    Lista_Concatenaciones.forEach(expresion => {
-        console.log("->"+expresion.label+"<-")
-        retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`
+    Lista_Concatenaciones.forEach(parsing_expresion => {
+        //console.log("->"+expresion.label+"<-")
+        retorno +=`${Casteo(Tipos_Variables[numero_Caso][i])}s${numero_Caso}${i}//`;
         i++;
     });
     
+   
     retorno = retorno.slice(0, -2);
 
     return retorno;
@@ -319,7 +323,9 @@ function Retorno_Produccion_Default(expresion, caso, index, visitor,qty){ // cer
         let delimitador = Delimitadores(expresion, qty, caso, index,visitor);
         if (delimitador !== "") return delimitador;
     }else {
+      
         if (expresion instanceof n.String || expresion instanceof n.Corchetes || expresion instanceof n.Any){
+            
             return `
             InicioLexema = cursor
             if (.not. ${expresion.accept(visitor)}) then

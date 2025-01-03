@@ -53,23 +53,35 @@ opciones
   }
 
 union
-  = expr:expresion rest:(_ @expresion !(_ literales? _ "=") )* accion:(_ @predicado)? {
+  = expr:parsing_Expression rest:(_ @parsing_Expression !(_ literales? _ "=") )* accion:(_ @predicado)? {
 
-    let expresiones = [expr, ...rest]
-    let Parametros = expresiones.map(expresion => {return expresion.label.slice(0, -1)})
-    Parametros = Parametros.filter(label => typeof label === "string" && label !== "!" && label !== "$" && label !== "&" && label !== "@")    
-    if(accion !== null){  accion.parametros = Parametros}
-    return new n.Union(expresiones, accion);
+    let parsing = [expr, ...rest]
+    console.log(parsing[0].Etiqueta.Etiqueta);
+    let Parametros = parsing
+  .filter((parsing_Expresions) => parsing_Expresions.Etiqueta.Etiqueta && parsing_Expresions.Etiqueta.Etiqueta !== null)
+  .map((parsing_Expresions) => { return parsing_Expresions.Etiqueta.Etiqueta });
+
+  console.log(Parametros);
+  if(accion !== null){  accion.parametros = Parametros}
+    return new n.Union(parsing, accion);
   }
 
-expresion
-  = label:$(etiqueta/varios)? _ expr:expresiones _ qty:$([?+*]/conteo)? {
-    return new n.Expresion(expr, label, qty);
-  }
+parsing_Expression = @Pluck 
+                  /  "!" (expresiones/ predicado) 
+                  /  "&" (expresiones/ predicado) 
+                  / ".!"
 
-etiqueta = ("@")? _ id:identificador _ ":" (varios)?
+Pluck = pluck:"@"? _ expr:etiqueta {
+  return new n.Pluck(expr, pluck ? true : false);
+}
 
-varios = ("!"(!".") /"$"/"@"/"&")
+etiqueta = eti:(@identificador _ ":")? _ expr:anotado {
+  return new n.Etiqueta(expr, eti);
+}
+
+anotado = text:"$"? _ expr:expresiones _ qty:([?+*]/conteo)? {
+  return new n.Anotado(expr,qty,text ? true : false);
+}
 
 expresiones
   = id:identificador {
@@ -90,9 +102,6 @@ expresiones
   }
   / "." {
     return new n.Any(true);
-  }
-  / "!."{
-    return new n.finCadena();
   }
 
 // conteo = "|" parteconteo _ (_ delimitador )? _ "|"
