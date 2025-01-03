@@ -220,7 +220,7 @@ end function f${this.Contador_Acciones}
         let characterClass = [];
         const set = node.exprs
             .filter((char) => typeof char === "string")
-            .map((char) => node.isCase ? `tolower("${char}")` : `"${char}"`);
+            .map((char) => node.isCase ? `tolower(${this.convertLiteralRango(char)})` : `${this.convertLiteralRango(char)}`);
         const ranges = node.exprs
             .filter((char) => char instanceof n.rango)
             .map((range) => range.accept(this, node.isCase)); 
@@ -241,7 +241,7 @@ end function f${this.Contador_Acciones}
     }
 
     //Solo devuelve las condiciones a cumplirse
-    visitliteralRango(node) {
+    convertLiteralRango(char) {
         const literalMap = {
             "\\t": "char(9)",  // Tabulación
             "\\n": "char(10)", // Nueva línea
@@ -250,12 +250,14 @@ end function f${this.Contador_Acciones}
         };
     
         // Verifica si el literal es especial y tradúcelo, de lo contrario usa comillas
-        const literalFortran = literalMap[node.val] || `"${node.val}"`;
+        const literalFortran = literalMap[char] || `"${char}"`;
     
+        /*
         const condition = node.isCase
         ? `tolower(input(cursor:cursor)) == tolower(${literalFortran})`
         : `input(cursor:cursor) == ${literalFortran}`
-        return "(" + condition + ")";
+        */
+        return literalFortran;
     }
 
     visitidRel(node) {

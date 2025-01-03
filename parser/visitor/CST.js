@@ -231,3 +231,12 @@ export class finCadena extends Node {
     }
 }
     
+
+export class Delimitador {
+    constructor(val1=null, ranged=null, val2=null, separator=null){
+        this.val1 = val1;
+        this.ranged = ranged;
+        this.val2 = val2;
+        this.separator = separator;
+    }
+}

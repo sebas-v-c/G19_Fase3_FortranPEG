@@ -1364,7 +1364,7 @@ function peg$parse(input, options) {
   }
 
   function peg$parseanotado() {
-    var s0, s1, s2, s3, s4, s5;
+    var s0, s1, s2, s3, s4, s5, s6;
 
     s0 = peg$currPos;
     if (input.charCodeAt(peg$currPos) === 36) {
@@ -1381,19 +1381,21 @@ function peg$parse(input, options) {
     s3 = peg$parseexpresiones();
     if (s3 !== peg$FAILED) {
       s4 = peg$parse_();
-      s5 = input.charAt(peg$currPos);
-      if (peg$r2.test(s5)) {
+      s5 = peg$currPos;
+      s6 = input.charAt(peg$currPos);
+      if (peg$r2.test(s6)) {
         peg$currPos++;
       } else {
-        s5 = peg$FAILED;
+        s6 = peg$FAILED;
         if (peg$silentFails === 0) { peg$fail(peg$e17); }
       }
-      if (s5 === peg$FAILED) {
-        s5 = peg$parseconteo();
+      if (s6 === peg$FAILED) {
+        s6 = peg$parseconteo();
       }
-      if (s5 === peg$FAILED) {
-        s5 = null;
+      if (s6 === peg$FAILED) {
+        s6 = null;
       }
+      s5 = input.substring(s5, peg$currPos);
       peg$savedPos = s0;
       s0 = peg$f12(s1, s3, s5);
     } else {

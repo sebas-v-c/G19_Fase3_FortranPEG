@@ -41,7 +41,7 @@ function aceptacionEOF() result(aceptacion)
     aceptacion = .true.
 end function aceptacionEOF
 
-function acioacioentradal_characters(input_string) result(output_string)
+function replace_special_characters(input_string) result(output_string)
     implicit none
     character(len=:), allocatable, intent(in) :: input_string
     character(len=:), allocatable :: temp_string
@@ -71,7 +71,7 @@ function acioacioentradal_characters(input_string) result(output_string)
     end do
     allocate(character(len=len(temp_string)) :: output_string)
     output_string = temp_string
-end function acioacioentradal_characters
+end function replace_special_characters
 
 function aceptarLiterales(literales, isCase) result(aceptacion)
     character(len=*) :: literales
@@ -148,6 +148,7 @@ function aceptarConjunto(set, isCase) result(accept)
     accept = .true.
 end function aceptarConjunto
 
+
 `
 
 function CrearGrupos(grupos){
@@ -166,8 +167,10 @@ function EleccionTipo(parsing_expresion, Producciones_Retornos) {
         expresion = parsing_expresion.Etiqueta.Anotado.expr;
     }else if (parsing_expresion instanceof n.Asersion || parsing_expresion instanceof n.NegAsersion){
         expresion = parsing_expresion.asersion;
+    }else if (parsing_expresion instanceof n.Any){
+        expresion = parsing_expresion;
     }
-
+        
     if (expresion instanceof n.String || expresion instanceof n.Corchetes) {
         return "character(len=:), allocatable";
     }else if(expresion instanceof n.idRel){
@@ -301,60 +304,87 @@ function Retorno_Produccion_Condicional(expresion, caso, index,visitor){ // cerr
     }
 }
 
-function Delimitadores(expresion, qty, caso, index,visitor){
 
+function Delimitadores(expresion, qty, caso, index, visitor) {
+    if (qty instanceof Delimitador) {
+        const { val1, ranged, val2, separator } = qty;
+        let lowerBound = val1 !== null ? val1 : 0; // Default to 0 if not specified
+        let upperBound = ranged && val2 !== null ? val2 : null; // Null means no upper limit
+        let fortranCode = '';
 
-    if (qty.startsWith('|') && qty.endsWith('|')) {
-        qty = qty.replace(/\s/g, '');
-        // Extract range bounds from |n..m|, |n..|, or |..m|
-        const rangeMatch = /\|(\d*)\.\.(\d*)\|/.exec(qty);
-        if (rangeMatch) {
-            const lowerBound = rangeMatch[1] ? parseInt(rangeMatch[1], 10) : 0; // Default to 0 if not specified
-            const upperBound = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : null; // Null means no upper limit
-            let fortranCode = '';
-
-            // Generate Fortran code for the lower bound
-            if (lowerBound > 0) {
-                fortranCode += `
-                do i = 1, ${lowerBound}
-                    if (.not. (${expresion.accept(visitor)})) then
+        // Function to add separator logic using aceptarLiterales
+        const addSeparatorLogic = (isFinalIterationCheck = false) => {
+            if (separator) {
+                return `
+                if (${isFinalIterationCheck ? '.false.' : '.true.'}) then
+                    if (.not. (aceptarLiterales("${separator}"))) then
                         exit
                     end if
-                end do
+                end if
                 `;
             }
+            return '';
+        };
 
-            // Generate Fortran code for the upper bound
-            if (upperBound !== null) {
-                fortranCode += `
-                do i = ${lowerBound + 1}, ${upperBound}
-                    if (.not. (${expresion.accept(visitor)})) then
-                        exit
-                    end if
-                end do
-                `;
-            } else {
-                // Handle |n..| case (no upper limit)
-                fortranCode += `
-                do while (len(entrada) >= cursor)
-                    if (.not. (${expresion.accept(visitor)})) then
-                        exit
-                    end if
-                end do
-                
-                `;
-            }
-
-            return "\t\tInicioLexema = cursor\n\n\n" +fortranCode + `\n\t\ts${caso}${index} = ConsumirEntrada()`;
+        // Handle lower bound
+        if (lowerBound > 0) {
+            fortranCode += `
+            ! Lower bound: ${lowerBound} repetitions
+            do i = 1, ${lowerBound}
+                if (.not. (${expresion.accept(visitor)})) then
+                    exit
+                end if
+                ${addSeparatorLogic('i == ' + lowerBound)}  ! Add separator check if not last iteration
+            end do
+            `;
         }
+
+        // Handle upper bound
+        if (upperBound !== null) {
+            fortranCode += `
+            ! Upper bound: ${upperBound} repetitions
+            do i = ${lowerBound + 1}, ${upperBound}
+                if (.not. (${expresion.accept(visitor)})) then
+                    exit
+                end if
+                ${addSeparatorLogic('i == ' + upperBound)}  ! Add separator check if not last iteration
+            end do
+            `;
+        } else if (ranged) {
+            // Handle |n..| case (no upper limit)
+            fortranCode += `
+            ! No upper limit
+            do while (len(entrada) >= cursor)
+                if (.not. (${expresion.accept(visitor)})) then
+                    exit
+                end if
+                ${addSeparatorLogic()}  ! Add separator check for infinite loop
+            end do
+            `;
+        }
+
+        return `
+        \t\t! Initialize lexeme tracking
+        \t\tInicioLexema = cursor
+        
+        ${fortranCode}
+
+        \t\t! Consume remaining input
+        \t\ts${caso}${index} = ConsumirEntrada()
+        `;
     }
-     return "";
+
+    // Return an empty string for invalid or unsupported cases
+    return '';
 }
+
+
+
 
 // InicioLexema = cursor ciclos s${caso}${index} = ConsumirEntrada()
 function Retorno_Produccion_Default(expresion, caso, index, visitor,qty){ // cerradura sin contador
     
-    if (qty){
+    if (qty instanceof n.Delimitador){
         // delimitador
         let delimitador = Delimitadores(expresion, qty, caso, index,visitor);
         if (delimitador !== "") return delimitador;
@@ -376,7 +406,6 @@ function Retorno_Produccion_Default(expresion, caso, index, visitor,qty){ // cer
         }
     }   
 }
-
 
 
 export {funciones,CrearGrupos,generarVariablesLexemas, Generar_Variable_Res, Elegir_Retorno_res, CrearAcciones,Retorno_Produccion_Mas, Retorno_Produccion_Kleene, Retorno_Produccion_Condicional, Retorno_Produccion_Default, Delimitadores, generarVariablesEtiquetas}
