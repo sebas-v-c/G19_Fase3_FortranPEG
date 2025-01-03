@@ -53,6 +53,7 @@ const analizar = () => {
 
        
     } catch (e) {
+        console.error(e)
         if (e.location === undefined) {
             salida.setValue(`Error: ${e.message}`);
         } else {

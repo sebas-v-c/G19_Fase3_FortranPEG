@@ -349,10 +349,10 @@ function peg$parse(input, options) {
   var peg$f17 = function() {
     return new n.Any(true);
   };
-  var peg$f18 = function(val1) { return new n.Delimitador(val1=val1); };
-  var peg$f19 = function(val1, ranged, val2) { return new n.Delimitador(val1=val1, ranged=true, val2=val2); };
-  var peg$f20 = function(val1, separator) { return new n.Delimitador(val1=val1, separator=separator); };
-  var peg$f21 = function(val1, val2, separator) { return new n.Delimitador(val1=val1, ranged=true, val2=val2, separator=separator); };
+  var peg$f18 = function(val1) { return new n.Delimitador(val1=val1, false, null, null); };
+  var peg$f19 = function(val1, ranged, val2) { return new n.Delimitador(val1, true, val2, null, null); };
+  var peg$f20 = function(val1, separator) { console.log("AAAA");return new n.Delimitador(val1, false, "", separator); };
+  var peg$f21 = function(val1, ranged, val2, separator) { return new n.Delimitador(val1, true, val2, separator); };
   var peg$f22 = function(inicio, final) {
       return new n.rango(inicio, final)
     };
@@ -1763,7 +1763,7 @@ function peg$parse(input, options) {
                   }
                   if (s13 !== peg$FAILED) {
                     peg$savedPos = s0;
-                    s0 = peg$f21(s3, s7, s11);
+                    s0 = peg$f21(s3, s5, s7, s11);
                   } else {
                     peg$currPos = s0;
                     s0 = peg$FAILED;

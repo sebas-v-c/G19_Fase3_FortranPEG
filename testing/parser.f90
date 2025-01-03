@@ -14,7 +14,7 @@ function parse(cad) result(res)
     entrada = cad
     cursor = 1
         
-    res = phola() ! esperamos el retorno
+    res = ppruebas() ! esperamos el retorno
 end function parse
 ! funciones útiles
 
@@ -164,7 +164,285 @@ end function aceptarConjunto
 
 
 
-recursive function phola() result(res)
+recursive function ppruebas() result(res)
+    character(len=:), allocatable :: s00
+character(len=:), allocatable :: s01
+character(len=:), allocatable :: s02
+character(len=:), allocatable :: s10
+character(len=:), allocatable :: s11
+character(len=:), allocatable :: s12
+character(len=:), allocatable :: s20
+Error :: s21
+character(len=:), allocatable :: s30
+character(len=:), allocatable :: s31
+character(len=:), allocatable :: s40
+character(len=:), allocatable :: s41
+character(len=:), allocatable :: s42
+character(len=:), allocatable :: s50
+character(len=:), allocatable :: s60
+character(len=:), allocatable :: s70
+character(len=:), allocatable :: s80
+ 
+    character(len=:), allocatable :: res
+    integer :: i
+    integer :: no_caso
+    logical :: temporal  ! para el ?
+ 
+        GuardarPunto = cursor
+        
+        do no_caso = 0, 9 ! lista de concatenaciones
+            select case(no_caso)
+                
+                        case(0)
+                            cursor = GuardarPunto
+                            
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("a","null")) then
+                cycle
+            end if
+            s00 = ConsumirEntrada()
+                    
+
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("-","null")) then
+                cycle
+            end if
+            verificador = ConsumirEntrada()
+            if (len(verificador) < 0) then
+                cursor = InicioLexema
+            end if
+                    
+
+            s02 = pnum()
+             
+res = s00//s01//s02
+                            exit
+                        
+
+                        case(1)
+                            cursor = GuardarPunto
+                            
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("b","null")) then
+                cycle
+            end if
+            s10 = ConsumirEntrada()
+                    
+
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("-","null")) then
+                cycle
+            end if
+            verificador = ConsumirEntrada()
+            if (len(verificador) > 0) then
+                cursor = InicioLexema
+            end if
+                    
+
+            s12 = pnum()
+             
+res = s10//s11//s12
+                            exit
+                        
+
+                        case(2)
+                            cursor = GuardarPunto
+                            
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("c","null")) then
+                cycle
+            end if
+            s20 = ConsumirEntrada()
+                    
+
+            InicioLexema = cursor
+            if (.not. aceptarPunto()) then
+                cycle
+            end if
+            s21 = ConsumirEntrada()
+                     
+res = s20//s21
+                            exit
+                        
+
+                        case(3)
+                            cursor = GuardarPunto
+                            
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("d","null")) then
+                cycle
+            end if
+            s30 = ConsumirEntrada()
+                    
+
+        s31 = pnum()
+        do while (len(entrada) >= cursor)
+            s31 =s31//pnum()
+        end do
+         
+res = s30//s31
+                            exit
+                        
+
+                        case(4)
+                            cursor = GuardarPunto
+                            
+            InicioLexema = cursor
+            if (.not. aceptarLiterales("e","null")) then
+                cycle
+            end if
+            s40 = ConsumirEntrada()
+                    
+
+            InicioLexema = cursor
+            if (.not. (aceptarConjunto([char(32)],"null"))) then
+                cycle
+            end if
+            s41 = ConsumirEntrada()
+                    
+
+            s42 = pnum()
+             
+res = s40//s42
+                            exit
+                        
+
+                        case(5)
+                            cursor = GuardarPunto
+                            
+    		! Initialize lexeme tracking
+    		InicioLexema = cursor
+    
+    
+        ! Lower bound: 3 repetitions
+        do i = 1, 3
+            if (.not. (aceptarLiterales("f","null"))) then
+                exit
+            end if
+              ! Add separator check if not last iteration
+        end do
+        
+
+    		! Consume remaining input
+    		s50 = ConsumirEntrada()
+     
+res = s50
+                            exit
+                        
+
+                        case(6)
+                            cursor = GuardarPunto
+                            
+    		! Initialize lexeme tracking
+    		InicioLexema = cursor
+    
+    
+        ! Lower bound: 3 repetitions
+        do i = 1, 3
+            if (.not. (aceptarLiterales("g","null"))) then
+                exit
+            end if
+            
+            if (.not. (i == 3)) then
+                if (.not. (aceptarLiterales(', ', "null"))) then
+                    exit
+                end if
+            end if
+              ! Add separator check if not last iteration
+        end do
+        
+
+    		! Consume remaining input
+    		s60 = ConsumirEntrada()
+     
+res = s60
+                            exit
+                        
+
+                        case(7)
+                            cursor = GuardarPunto
+                            
+    		! Initialize lexeme tracking
+    		InicioLexema = cursor
+    
+    
+        ! Lower bound: 1 repetitions
+        do i = 1, 1
+            if (.not. (aceptarLiterales("h","null"))) then
+                exit
+            end if
+              ! Add separator check if not last iteration
+        end do
+        
+        ! Upper bound: 3 repetitions
+        do i = 2, 3
+            if (.not. (aceptarLiterales("h","null"))) then
+                exit
+            end if
+              ! Add separator check if not last iteration
+        end do
+        
+
+    		! Consume remaining input
+    		s70 = ConsumirEntrada()
+     
+res = s70
+                            exit
+                        
+
+                        case(8)
+                            cursor = GuardarPunto
+                            
+    		! Initialize lexeme tracking
+    		InicioLexema = cursor
+    
+    
+        ! Lower bound: 1 repetitions
+        do i = 1, 1
+            if (.not. (aceptarLiterales("i","null"))) then
+                exit
+            end if
+            
+            if (.not. (i == 1)) then
+                if (.not. (aceptarLiterales(', ', "null"))) then
+                    exit
+                end if
+            end if
+              ! Add separator check if not last iteration
+        end do
+        
+        ! Upper bound: 3 repetitions
+        do i = 2, 3
+            if (.not. (aceptarLiterales("i","null"))) then
+                exit
+            end if
+            
+            if (.not. (i == 3)) then
+                if (.not. (aceptarLiterales(', ', "null"))) then
+                    exit
+                end if
+            end if
+              ! Add separator check if not last iteration
+        end do
+        
+
+    		! Consume remaining input
+    		s80 = ConsumirEntrada()
+     
+res = s80
+                            exit
+                        
+            case default
+                return
+            end select
+        end do
+        
+
+    return
+END function ppruebas
+        
+
+recursive function pnum() result(res)
     character(len=:), allocatable :: s00
  
     character(len=:), allocatable :: res
@@ -180,30 +458,12 @@ recursive function phola() result(res)
                         case(0)
                             cursor = GuardarPunto
                             
-    		! Initialize lexeme tracking
-    		InicioLexema = cursor
-    
-    
-        ! Lower bound: 1 repetitions
-        do i = 1, 1
-            if (.not. (aceptarLiterales("b","null"))) then
-                exit
+            InicioLexema = cursor
+            if (.not. (aceptarRango("0" ,"9","null"))) then
+                cycle
             end if
-              ! Add separator check if not last iteration
-        end do
-        
-        ! Upper bound: 2 repetitions
-        do i = 2, 2
-            if (.not. (aceptarLiterales("b","null"))) then
-                exit
-            end if
-              ! Add separator check if not last iteration
-        end do
-        
-
-    		! Consume remaining input
-    		s00 = ConsumirEntrada()
-     
+            s00 = ConsumirEntrada()
+                     
 res = s00
                             exit
                         
@@ -214,7 +474,7 @@ res = s00
         
 
     return
-END function phola
+END function pnum
         
 ! Acciones
 

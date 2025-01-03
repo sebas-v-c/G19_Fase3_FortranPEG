@@ -316,8 +316,8 @@ function Delimitadores(expresion, qty, caso, index, visitor) {
     const addSeparatorLogic = (isFinalIterationCheck = false) => {
         if (separator) {
             return `
-            if (${isFinalIterationCheck ? '.false.' : '.true.'}) then
-                if (.not. (aceptarLiterales("${separator}"))) then
+            if (${isFinalIterationCheck}) then
+                if (.not. (aceptarLiterales(${separator}, "null"))) then
                     exit
                 end if
             end if
@@ -334,7 +334,7 @@ function Delimitadores(expresion, qty, caso, index, visitor) {
             if (.not. (${expresion.accept(visitor)})) then
                 exit
             end if
-            ${addSeparatorLogic('i == ' + lowerBound)}  ! Add separator check if not last iteration
+            ${addSeparatorLogic('.not. (i == ' + lowerBound + ')')}  ! Add separator check if not last iteration
         end do
         `;
     }
@@ -347,7 +347,7 @@ function Delimitadores(expresion, qty, caso, index, visitor) {
             if (.not. (${expresion.accept(visitor)})) then
                 exit
             end if
-            ${addSeparatorLogic('i == ' + upperBound)}  ! Add separator check if not last iteration
+            ${addSeparatorLogic('.not. (i == ' + upperBound + ')')}  ! Add separator check if not last iteration
         end do
         `;
     } else if (ranged) {
